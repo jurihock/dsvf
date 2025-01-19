@@ -106,8 +106,8 @@ public:
     const auto y = [](const std::array<double, 3>& v1,
                       const std::array<double, 3>& v2)
     {
-      return std::transform_reduce(
-        v1.begin(), v1.end(), v2.begin(), 0);
+      return static_cast<T>(std::transform_reduce(
+        v1.begin(), v1.end(), v2.begin(), 0));
     };
 
     const auto& c = coeffs.c;
@@ -117,9 +117,9 @@ public:
 
     State state
     {
-      .hp = static_cast<T>(y(coeffs.hp, z)),
-      .bp = static_cast<T>(y(coeffs.bp, z)),
-      .lp = static_cast<T>(y(coeffs.lp, z)),
+      .hp = y(z, coeffs.hp),
+      .bp = y(z, coeffs.bp),
+      .lp = y(z, coeffs.lp),
     };
 
     z[2] += c[2] * z[1];
