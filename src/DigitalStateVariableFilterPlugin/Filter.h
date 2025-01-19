@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <numbers>
+#include <numeric>
 
 class Filter final
 {
@@ -102,10 +103,11 @@ public:
   template<typename T>
   State<T> filter(const T x)
   {
-    const auto y = [](const std::array<double, 3>& z,
-                      const std::array<double, 3>& d)
+    const auto y = [](const std::array<double, 3>& v1,
+                      const std::array<double, 3>& v2)
     {
-      return d[0] * z[0] + d[1] * z[1] + d[2] * z[2];
+      return std::transform_reduce(
+        v1.begin(), v1.end(), v2.begin(), 0);
     };
 
     const auto& c = coeffs.c;
@@ -115,9 +117,9 @@ public:
 
     State state
     {
-      .hp = static_cast<T>(y(z, coeffs.hp)),
-      .bp = static_cast<T>(y(z, coeffs.bp)),
-      .lp = static_cast<T>(y(z, coeffs.lp)),
+      .hp = static_cast<T>(y(coeffs.hp, z)),
+      .bp = static_cast<T>(y(coeffs.bp, z)),
+      .lp = static_cast<T>(y(coeffs.lp, z)),
     };
 
     z[2] += c[2] * z[1];
