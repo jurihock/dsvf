@@ -111,6 +111,21 @@ public:
   template<typename T>
   State<T> filter(const T x)
   {
+    const auto fix = [](const Coeffs::Scalar value)
+    {
+      // The pluginval reports NaNs in the audio buffer.
+      // Since the exact reason is not known yet,
+      // all NaNs should be replaced by zero.
+      // However, do not use std::isnan to check for NaN.
+      // It may be disabled in the fast math build.
+
+      const auto abs = std::abs(value);
+      const auto eps = std::numeric_limits<Coeffs::Scalar>::epsilon();
+      const auto ok  = std::isgreater(abs, eps);
+
+      return static_cast<T>(ok ? value : Coeffs::Zero);
+    };
+
     const auto y = [](const Coeffs::Array& a,
                       const Coeffs::Array& b)
     {
@@ -133,10 +148,10 @@ public:
 
     State<T> state
     {
-      .hp = static_cast<T>(hp),
-      .bp = static_cast<T>(bp),
-      .lp = static_cast<T>(lp),
-      .br = static_cast<T>(br),
+      .hp = fix(hp),
+      .bp = fix(bp),
+      .lp = fix(lp),
+      .br = fix(br),
     };
 
     z[2] += c[2] * z[1];
