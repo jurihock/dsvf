@@ -20,14 +20,19 @@ public:
 
   struct Coeffs
   {
-    std::array<double, 3> c, z;
-    std::array<double, 3> hp, bp, lp;
+    using Scalar = double;
+    using Array  = std::array<Scalar, 3>;
+
+    static constexpr Scalar Zero = 0;
+
+    Array c, z;
+    Array hp, bp, lp;
   };
 
   template<typename T>
   struct State
   {
-    T hp, bp, lp;
+    T hp, bp, lp, br;
   };
 
   Filter(const double samplerate) :
@@ -77,7 +82,10 @@ public:
 
   void reset()
   {
-    std::fill(coeffs.z.begin(), coeffs.z.end(), 0);
+    std::fill(
+      coeffs.z.begin(),
+      coeffs.z.end(),
+      Coeffs::Zero);
   }
 
   void sync()
@@ -103,23 +111,32 @@ public:
   template<typename T>
   State<T> filter(const T x)
   {
-    const auto y = [](const std::array<double, 3>& v1,
-                      const std::array<double, 3>& v2)
+    const auto y = [](const Coeffs::Array& a,
+                      const Coeffs::Array& b)
     {
-      return static_cast<T>(std::transform_reduce(
-        v1.begin(), v1.end(), v2.begin(), 0));
+      return std::transform_reduce(
+        a.begin(),
+        a.end(),
+        b.begin(),
+        Coeffs::Zero);
     };
 
     const auto& c = coeffs.c;
     auto& z = coeffs.z;
 
-    z[0] = static_cast<double>(x) - z[1] - z[2];
+    z[0] = static_cast<Coeffs::Scalar>(x) - z[1] - z[2];
 
-    State state
+    const auto hp = y(z, coeffs.hp);
+    const auto bp = y(z, coeffs.bp);
+    const auto lp = y(z, coeffs.lp);
+    const auto br = hp + lp;
+
+    State<T> state
     {
-      .hp = y(z, coeffs.hp),
-      .bp = y(z, coeffs.bp),
-      .lp = y(z, coeffs.lp),
+      .hp = static_cast<T>(hp),
+      .bp = static_cast<T>(bp),
+      .lp = static_cast<T>(lp),
+      .br = static_cast<T>(br),
     };
 
     z[2] += c[2] * z[1];
