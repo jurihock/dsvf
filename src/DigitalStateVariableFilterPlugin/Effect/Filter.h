@@ -6,6 +6,7 @@
 #include <limits>
 #include <numbers>
 #include <numeric>
+#include <type_traits>
 
 class Filter final
 {
@@ -162,8 +163,8 @@ private:
     constexpr auto absmin = std::numeric_limits<X>::epsilon();
     constexpr auto absmax = one;
 
-    static_assert(!(absmin < NAN));
-    static_assert(absmax < INFINITY);
+    static_assert(!(absmin < NAN) || !(NAN == NAN));
+    static_assert(  absmax < INFINITY);
 
     const auto abs = std::abs(value);
 

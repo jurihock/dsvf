@@ -2,7 +2,8 @@
 
 #include <JuceHeader.h>
 
-#include <DigitalStateVariableFilterPlugin/Filter.h>
+#include <DigitalStateVariableFilterPlugin/Effect/Filter.h>
+#include <DigitalStateVariableFilterPlugin/Effect/Mixer.h>
 
 #include <memory>
 #include <span>
@@ -30,6 +31,7 @@ protected:
 private:
 
   std::unique_ptr<Filter> filter;
+  std::unique_ptr<Mixer> mixer;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Effect)
 

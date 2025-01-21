@@ -4,6 +4,7 @@ Effect::Effect(const double samplerate) :
   samplerate(samplerate)
 {
   filter = std::make_unique<Filter>(samplerate);
+  mixer = std::make_unique<Mixer>(1, 1, 1, 1, 1);
 }
 
 Effect::~Effect()
@@ -48,8 +49,7 @@ void Effect::wet(const std::span<const float> input, const std::span<float> outp
     output.begin(),
     [&](const float x)
     {
-      const auto y = filter->filter(x).bp;
-      const auto g = 10;
-      return y * g;
+      const auto& [hp, bp, lp, br] = filter->filter(x);
+      return mixer->mix(x, hp, bp, lp, br);
     });
 }
