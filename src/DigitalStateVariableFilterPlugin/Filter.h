@@ -10,7 +10,7 @@
 class Filter final
 {
 
-public:
+private:
 
   struct Config
   {
@@ -22,13 +22,15 @@ public:
   struct Coeffs
   {
     using Scalar = double;
-    using Array  = std::array<Scalar, 3>;
+    using Vector = std::array<Scalar, 3>;
 
     static constexpr Scalar Zero = 0;
 
-    Array c, z;
-    Array hp, bp, lp;
+    Vector c, z;
+    Vector hp, bp, lp;
   };
+
+public:
 
   template<typename T>
   struct State
@@ -43,8 +45,8 @@ public:
       .quality = 1
     })
   {
-    sync();
     reset();
+    sync();
   }
 
   ~Filter()
@@ -112,23 +114,8 @@ public:
   template<typename T>
   State<T> filter(const T x)
   {
-    const auto fix = [](const Coeffs::Scalar value)
-    {
-      // The pluginval reports NaNs in the audio buffer.
-      // Since the exact reason is not known yet,
-      // all NaNs should be replaced by zero.
-      // However, do not use std::isnan to check for NaN.
-      // It may be disabled in the fast math build.
-
-      const auto abs = std::abs(value);
-      const auto eps = std::numeric_limits<Coeffs::Scalar>::epsilon();
-      const auto ok  = std::isgreater(abs, eps);
-
-      return static_cast<T>(ok ? value : Coeffs::Zero);
-    };
-
-    const auto y = [](const Coeffs::Array& a,
-                      const Coeffs::Array& b)
+    const auto y = [](const Coeffs::Vector& a,
+                      const Coeffs::Vector& b)
     {
       return std::transform_reduce(
         a.begin(),
@@ -149,10 +136,10 @@ public:
 
     State<T> state
     {
-      .hp = fix(hp),
-      .bp = fix(bp),
-      .lp = fix(lp),
-      .br = fix(br),
+      .hp = clip<T>(hp),
+      .bp = clip<T>(bp),
+      .lp = clip<T>(lp),
+      .br = clip<T>(br),
     };
 
     z[2] += c[2] * z[1];
@@ -165,5 +152,33 @@ private:
 
   Config config;
   Coeffs coeffs;
+
+  template<typename Y, typename X>
+  inline static Y clip(const X value)
+  {
+    constexpr auto zero = X(0);
+    constexpr auto one  = X(1);
+
+    constexpr auto absmin = std::numeric_limits<X>::epsilon();
+    constexpr auto absmax = one;
+
+    static_assert((NAN < absmin) || (absmax < NAN));
+    static_assert((INFINITY < absmin) || (absmax < INFINITY));
+
+    const auto abs = std::abs(value);
+
+    if (std::isless(abs, absmin))
+    {
+      return static_cast<Y>(zero);
+    }
+    else if (std::isgreater(abs, absmax))
+    {
+      return static_cast<Y>(std::copysign(one, value));
+    }
+    else
+    {
+      return static_cast<Y>(value);
+    }
+  }
 
 };
