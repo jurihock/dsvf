@@ -162,12 +162,16 @@ private:
     constexpr auto absmin = std::numeric_limits<X>::epsilon();
     constexpr auto absmax = one;
 
-    static_assert((NAN < absmin) || (absmax < NAN));
-    static_assert((INFINITY < absmin) || (absmax < INFINITY));
+    static_assert(absmin > NAN || NAN != NAN);
+    static_assert(absmax < INFINITY);
 
     const auto abs = std::abs(value);
 
-    if (std::isless(abs, absmin))
+    if (value != value)
+    {
+      return static_cast<Y>(zero);
+    }
+    else if (std::isless(abs, absmin))
     {
       return static_cast<Y>(zero);
     }
