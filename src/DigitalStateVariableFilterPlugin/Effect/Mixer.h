@@ -1,9 +1,10 @@
 #pragma once
 
+#include <DigitalStateVariableFilterPlugin/Effect/Clip.h>
+
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <limits>
 #include <numbers>
 #include <numeric>
 #include <type_traits>
@@ -44,7 +45,7 @@ public:
     const Vector  x { value, values... };
     const Scalar  y = std::transform_reduce(w.begin(), w.end(), x.begin(), Zero);
 
-    return static_cast<T>(y);
+    return static_clip<T>(y);
   }
 
 private:

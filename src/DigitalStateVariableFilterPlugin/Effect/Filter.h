@@ -1,9 +1,10 @@
 #pragma once
 
+#include <DigitalStateVariableFilterPlugin/Effect/Clip.h>
+
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <limits>
 #include <numbers>
 #include <numeric>
 #include <type_traits>
@@ -137,10 +138,10 @@ public:
 
     State<T> state
     {
-      .hp = clip<T>(hp),
-      .bp = clip<T>(bp),
-      .lp = clip<T>(lp),
-      .br = clip<T>(br),
+      .hp = static_clip<T>(hp),
+      .bp = static_clip<T>(bp),
+      .lp = static_clip<T>(lp),
+      .br = static_clip<T>(br),
     };
 
     z[2] += c[2] * z[1];
@@ -153,32 +154,5 @@ private:
 
   Config config;
   Coeffs coeffs;
-
-  template<typename Y, typename X>
-  inline static Y clip(const X value)
-  {
-    constexpr auto zero = X(0);
-    constexpr auto one  = X(1);
-
-    constexpr auto absmin = std::numeric_limits<X>::epsilon();
-    constexpr auto absmax = one;
-
-    static_assert(!(absmin < NAN) || !(NAN == NAN));
-    static_assert(  absmax < INFINITY);
-
-    const auto abs = std::abs(value);
-
-    if (!std::isgreater(abs, absmin))
-    {
-      return static_cast<Y>(zero);
-    }
-
-    if (std::isgreater(abs, absmax))
-    {
-      return static_cast<Y>(std::copysign(one, value));
-    }
-
-    return static_cast<Y>(value);
-  }
 
 };
