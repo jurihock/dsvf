@@ -7,11 +7,11 @@ Parameters::Parameters(juce::AudioProcessor& process) :
 {
   const auto dB = [](float x, int)
   {
-    const float e = std::numeric_limits<float>::epsilon();
-    const float i = std::numeric_limits<float>::infinity();
+    constexpr float e = std::numeric_limits<float>::epsilon();
+    constexpr float i = std::numeric_limits<float>::infinity();
     const float y = (x > e) ? 20 * std::log10(x) : -i;
 
-    return std::format("{:.0f} ({:.1f})", y, x);
+    return juce::String::formatted("%.0f (%.2f)", y, x);
   };
 
   add("bypass", new juce::AudioParameterBool(

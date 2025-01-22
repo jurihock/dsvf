@@ -1,12 +1,14 @@
 #pragma once
 
 #include <DigitalStateVariableFilterPlugin/Effect/Clip.h>
+#include <DigitalStateVariableFilterPlugin/Effect/Dot.h>
 
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <numbers>
 #include <numeric>
+#include <tuple>
 #include <type_traits>
 
 class Mixer final
@@ -23,29 +25,48 @@ private:
     using Vector = std::array<Scalar, 5>;
 
     static constexpr Scalar Zero = 0;
+  };
 
-    Vector vector;
+  struct Config
+  {
+    bool normalize;
+    Weights::Vector weights;
   };
 
 public:
 
-  Mixer(const Weights::Scalar weight = 1) : weights({weight})
+  Mixer() :
+    config({
+      .normalize = false,
+      .weights = Weights::Vector{1}
+    })
   {
   }
 
-  ~Mixer()
+  bool normalize() const
   {
+    return config.normalize;
+  }
+
+  void normalize(bool value)
+  {
+    config.normalize = value;
+  }
+
+  auto weights() const
+  {
+    return std::tuple_cat(config.weights);
   }
 
   template<typename T, typename... Ts, typename = AllSame<T, Ts...>>
-  void set(const T weight, const Ts... weights)
+  void weights(const T weight, const Ts... weights)
   {
     const auto N = std::tuple_size_v<Weights::Vector>;
     const auto M = sizeof...(Ts) + 1;
 
-    static_assert(M == N);
+    static_assert(N == M);
 
-    this->weights.vector =
+    config.weights =
     {
       static_cast<Weights::Scalar>(weight),
       static_cast<Weights::Scalar>(weights)...
@@ -58,18 +79,19 @@ public:
     const auto N = std::tuple_size_v<Weights::Vector>;
     const auto M = sizeof...(Ts) + 1;
 
-    static_assert(M == N);
+    static_assert(N == M);
 
-    const Weights::Vector& w = weights.vector;
+    const Weights::Vector& w = config.weights;
     const Weights::Vector  x { value, values... };
-    const Weights::Scalar  y = std::transform_reduce(
-      w.begin(), w.end(), x.begin(), Weights::Zero);
+    const Weights::Scalar  y = dot(w, x);
+
+    // TODO: normalization
 
     return static_clip<T>(y);
   }
 
 private:
 
-  Weights weights;
+  Config config;
 
 };

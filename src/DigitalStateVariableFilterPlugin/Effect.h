@@ -14,7 +14,6 @@ class Effect final
 public:
 
   Effect(const double samplerate);
-  ~Effect();
 
   int latency() const;
 

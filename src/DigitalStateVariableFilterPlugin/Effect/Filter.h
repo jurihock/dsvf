@@ -1,12 +1,14 @@
 #pragma once
 
 #include <DigitalStateVariableFilterPlugin/Effect/Clip.h>
+#include <DigitalStateVariableFilterPlugin/Effect/Dot.h>
 
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <numbers>
 #include <numeric>
+#include <tuple>
 #include <type_traits>
 
 class Filter final
@@ -34,12 +36,6 @@ private:
 
 public:
 
-  template<typename T>
-  struct State
-  {
-    T hp, bp, lp, br;
-  };
-
   Filter(const double samplerate) :
     config({
       .samplerate = samplerate,
@@ -49,10 +45,6 @@ public:
   {
     reset();
     sync();
-  }
-
-  ~Filter()
-  {
   }
 
   int latency() const
@@ -114,35 +106,23 @@ public:
   }
 
   template<typename T>
-  State<T> filter(const T x)
+  auto filter(const T value)
   {
-    const auto y = [](const Coeffs::Vector& a,
-                      const Coeffs::Vector& b)
-    {
-      return std::transform_reduce(
-        a.begin(),
-        a.end(),
-        b.begin(),
-        Coeffs::Zero);
-    };
-
     const auto& c = coeffs.c;
     auto& z = coeffs.z;
 
-    z[0] = static_cast<Coeffs::Scalar>(x) - z[1] - z[2];
+    z[0] = static_cast<Coeffs::Scalar>(value) - z[1] - z[2];
 
-    const auto hp = y(z, coeffs.hp);
-    const auto bp = y(z, coeffs.bp);
-    const auto lp = y(z, coeffs.lp);
+    const auto hp = dot(z, coeffs.hp);
+    const auto bp = dot(z, coeffs.bp);
+    const auto lp = dot(z, coeffs.lp);
     const auto br = hp + lp;
 
-    const State<T> state
-    {
-      .hp = static_clip<T>(hp),
-      .bp = static_clip<T>(bp),
-      .lp = static_clip<T>(lp),
-      .br = static_clip<T>(br),
-    };
+    const auto state = std::make_tuple(
+      static_clip<T>(hp),
+      static_clip<T>(bp),
+      static_clip<T>(lp),
+      static_clip<T>(br));
 
     z[2] += c[2] * z[1];
     z[1] += c[1] * z[0];
