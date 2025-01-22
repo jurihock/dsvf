@@ -36,13 +36,14 @@ void Effect::volume(const double value)
 
 void Effect::weights(const std::vector<double>& values)
 {
-  auto x  = values.at(0);
-  auto hp = values.at(1);
-  auto bp = values.at(2);
-  auto lp = values.at(3);
-  auto br = values.at(4);
+  const auto pack = [](auto arr, auto... idx)
+  {
+    return std::make_tuple(arr.at(idx)...);
+  };
 
-  mixer->weights(x, hp, bp, lp, br);
+  const auto [a, b, c, d, e] = pack(values, 0, 1, 2, 3, 4);
+
+  mixer->weights(a, b, c, d, e);
 }
 
 void Effect::dry(const std::span<const float> input, const std::span<float> output)
@@ -51,10 +52,13 @@ void Effect::dry(const std::span<const float> input, const std::span<float> outp
     input.begin(),
     input.end(),
     output.begin(),
-    [&](const float x)
+    [&](const auto x)
     {
-      filter->filter(x);
-      return x;
+      const auto [a, b, c, d, e] = filter->filter(x);
+
+      return a;
+
+      static_assert(std::is_same_v<decltype(x), decltype(a)>);
     });
 }
 
@@ -64,9 +68,12 @@ void Effect::wet(const std::span<const float> input, const std::span<float> outp
     input.begin(),
     input.end(),
     output.begin(),
-    [&](const float x)
+    [&](const auto x)
     {
-      const auto [hp, bp, lp, br] = filter->filter(x);
-      return mixer->mix(x, hp, bp, lp, br);
+      const auto [a, b, c, d, e] = filter->filter(x);
+
+      return mixer->mix(a, b, c, d, e);
+
+      static_assert(std::is_same_v<decltype(x), decltype(a)>);
     });
 }

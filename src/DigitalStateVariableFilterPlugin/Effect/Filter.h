@@ -120,6 +120,7 @@ public:
     const auto br = hp + lp;
 
     const auto state = std::make_tuple(
+      value,
       static_clip<T>(hp),
       static_clip<T>(bp),
       static_clip<T>(lp),
