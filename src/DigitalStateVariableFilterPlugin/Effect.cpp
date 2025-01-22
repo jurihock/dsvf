@@ -34,7 +34,7 @@ void Effect::volume(const double value)
   mixer->volume(value);
 }
 
-void Effect::weights(const std::vector<double> values)
+void Effect::weights(const std::vector<double>& values)
 {
   auto x  = values.at(0);
   auto hp = values.at(1);
