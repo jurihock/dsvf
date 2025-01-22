@@ -24,6 +24,16 @@ void Effect::quality(const double value)
   filter->sync();
 }
 
+void Effect::normalize(const bool value)
+{
+  mixer->normalize(value);
+}
+
+void Effect::volume(const double value)
+{
+  mixer->volume(value);
+}
+
 void Effect::weights(const std::vector<double> values)
 {
   auto x  = values.at(0);

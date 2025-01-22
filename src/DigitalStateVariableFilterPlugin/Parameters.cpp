@@ -18,6 +18,10 @@ Parameters::Parameters(juce::AudioProcessor& process) :
     { "bypass", schema }, "Bypass", false,
     juce::AudioParameterBoolAttributes()));
 
+  add("normalize", new juce::AudioParameterBool(
+    { "normalize", schema }, "Normalize", false,
+    juce::AudioParameterBoolAttributes()));
+
   add("frequency", new juce::AudioParameterFloat(
     { "frequency", schema }, "Frequency",
     juce::NormalisableRange<float>(20.0f, 20'000.0f, 10.0f), 1'000.0f,
@@ -30,36 +34,43 @@ Parameters::Parameters(juce::AudioProcessor& process) :
     juce::AudioParameterFloatAttributes()
       .withLabel("q")));
 
-  add("mix", new juce::AudioParameterFloat(
+  add("weights", new juce::AudioParameterFloat(
     { "dry", schema }, "Dry level",
     juce::NormalisableRange<float>(0.0f, 10.0f, 0.1f), 1.0f,
     juce::AudioParameterFloatAttributes()
       .withLabel("dB")
       .withStringFromValueFunction(dB)));
 
-  add("mix", new juce::AudioParameterFloat(
+  add("weights", new juce::AudioParameterFloat(
     { "wet.hp", schema }, "HP level",
     juce::NormalisableRange<float>(0.0f, 10.0f, 0.1f), 0.0f,
     juce::AudioParameterFloatAttributes()
       .withLabel("dB")));
 
-  add("mix", new juce::AudioParameterFloat(
+  add("weights", new juce::AudioParameterFloat(
     { "wet.lp", schema }, "LP level",
     juce::NormalisableRange<float>(0.0f, 10.0f, 0.1f), 0.0f,
     juce::AudioParameterFloatAttributes()
       .withLabel("dB")));
 
-  add("mix", new juce::AudioParameterFloat(
+  add("weights", new juce::AudioParameterFloat(
     { "wet.bp", schema }, "BP level",
     juce::NormalisableRange<float>(0.0f, 10.0f, 0.1f), 0.0f,
     juce::AudioParameterFloatAttributes()
       .withLabel("dB")));
 
-  add("mix", new juce::AudioParameterFloat(
+  add("weights", new juce::AudioParameterFloat(
     { "wet.br", schema }, "BR level",
     juce::NormalisableRange<float>(0.0f, 10.0f, 0.1f), 0.0f,
     juce::AudioParameterFloatAttributes()
       .withLabel("dB")));
+
+  add("volume", new juce::AudioParameterFloat(
+    { "volume", schema }, "Output level",
+    juce::NormalisableRange<float>(0.0f, 10.0f, 0.1f), 1.0f,
+    juce::AudioParameterFloatAttributes()
+      .withLabel("dB")
+      .withStringFromValueFunction(dB)));
 }
 
 Parameters::~Parameters()
@@ -69,6 +80,11 @@ Parameters::~Parameters()
 void Parameters::onbypass(std::function<void()> callback)
 {
   call("bypass", callback);
+}
+
+void Parameters::onnormalize(std::function<void()> callback)
+{
+  call("normalize", callback);
 }
 
 void Parameters::onfrequency(std::function<void()> callback)
@@ -81,14 +97,25 @@ void Parameters::onquality(std::function<void()> callback)
   call("quality", callback);
 }
 
-void Parameters::onmix(std::function<void()> callback)
+void Parameters::onweights(std::function<void()> callback)
 {
-  call("mix", callback);
+  call("weights", callback);
 }
+
+void Parameters::onvolume(std::function<void()> callback)
+{
+  call("volume", callback);
+}
+
 
 bool Parameters::bypass() const
 {
   return get<bool>("bypass");
+}
+
+bool Parameters::normalize() const
+{
+  return get<bool>("normalize");
 }
 
 double Parameters::frequency() const
@@ -113,6 +140,11 @@ std::vector<double> Parameters::weights() const
   };
 }
 
+double Parameters::volume() const
+{
+  return get<double>("volume");
+}
+
 void Parameters::load(const void* data, const int size)
 {
   try
@@ -133,6 +165,7 @@ void Parameters::load(const void* data, const int size)
     if (xml->getIntAttribute("schema") != schema) { return; }
 
     read<bool>("bypass", *xml);
+    read<bool>("normalize", *xml);
     read<double>("frequency", *xml);
     read<double>("quality", *xml);
     read<double>("dry", *xml);
@@ -140,6 +173,7 @@ void Parameters::load(const void* data, const int size)
     read<double>("wet.lp", *xml);
     read<double>("wet.bp", *xml);
     read<double>("wet.br", *xml);
+    read<double>("volume", *xml);
   }
   catch(const std::exception& exception)
   {
@@ -158,6 +192,7 @@ void Parameters::save(juce::MemoryBlock& data)
     xml->setAttribute("schema", schema);
 
     write<bool>("bypass", *xml);
+    write<bool>("normalize", *xml);
     write<double>("frequency", *xml);
     write<double>("quality", *xml);
     write<double>("dry", *xml);
@@ -165,6 +200,7 @@ void Parameters::save(juce::MemoryBlock& data)
     write<double>("wet.lp", *xml);
     write<double>("wet.bp", *xml);
     write<double>("wet.br", *xml);
+    write<double>("volume", *xml);
 
     LOG(xml->toString(juce::XmlElement::TextFormat().withoutHeader()));
 

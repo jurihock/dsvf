@@ -19,6 +19,8 @@ public:
 
   void frequency(const double value);
   void quality(const double value);
+  void normalize(const bool value);
+  void volume(const double value);
   void weights(const std::vector<double> values);
 
   void dry(const std::span<const float> input, const std::span<float> output);

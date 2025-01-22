@@ -23,7 +23,19 @@ Processor::Processor() :
     if (effect) { effect->quality(parameters->quality()); }
   });
 
-  parameters->onmix([&]()
+  parameters->onnormalize([&]()
+  {
+    std::lock_guard lock(mutex);
+    if (effect) { effect->normalize(parameters->normalize()); }
+  });
+
+  parameters->onvolume([&]()
+  {
+    std::lock_guard lock(mutex);
+    if (effect) { effect->volume(parameters->volume()); }
+  });
+
+  parameters->onweights([&]()
   {
     std::lock_guard lock(mutex);
     if (effect) { effect->weights(parameters->weights()); }
@@ -245,6 +257,8 @@ void Processor::resetEffect(const State& state)
   const double samplerate = state.samplerate;
   const double frequency = parameters->frequency();
   const double quality = parameters->quality();
+  const bool normalize = parameters->normalize();
+  const double volume = parameters->volume();
   const std::vector<double> weights = parameters->weights();
 
   LOG("Reset effect");
@@ -253,6 +267,8 @@ void Processor::resetEffect(const State& state)
 
   effect->frequency(frequency);
   effect->quality(quality);
+  effect->normalize(normalize);
+  effect->volume(volume);
   effect->weights(weights);
 
   const int latency = effect->latency();
