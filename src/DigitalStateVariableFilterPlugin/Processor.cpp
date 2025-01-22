@@ -22,6 +22,12 @@ Processor::Processor() :
     std::lock_guard lock(mutex);
     if (effect) { effect->quality(parameters->quality()); }
   });
+
+  parameters->onmix([&]()
+  {
+    std::lock_guard lock(mutex);
+    if (effect) { effect->weights(parameters->weights()); }
+  });
 }
 
 Processor::~Processor()
@@ -237,8 +243,9 @@ void Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer& 
 void Processor::resetEffect(const State& state)
 {
   const double samplerate = state.samplerate;
-  const double frequency = 700; // parameters->frequency();
-  const double quality = 1.5; // parameters->quality();
+  const double frequency = parameters->frequency();
+  const double quality = parameters->quality();
+  const std::vector<double> weights = parameters->weights();
 
   LOG("Reset effect");
 
@@ -246,6 +253,7 @@ void Processor::resetEffect(const State& state)
 
   effect->frequency(frequency);
   effect->quality(quality);
+  effect->weights(weights);
 
   const int latency = effect->latency();
 

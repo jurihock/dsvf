@@ -20,6 +20,7 @@ public:
 
   void frequency(const double value);
   void quality(const double value);
+  void weights(const std::vector<double> values);
 
   void dry(const std::span<const float> input, const std::span<float> output);
   void wet(const std::span<const float> input, const std::span<float> output);

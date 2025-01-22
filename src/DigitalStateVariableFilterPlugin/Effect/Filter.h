@@ -136,7 +136,7 @@ public:
     const auto lp = y(z, coeffs.lp);
     const auto br = hp + lp;
 
-    State<T> state
+    const State<T> state
     {
       .hp = static_clip<T>(hp),
       .bp = static_clip<T>(bp),

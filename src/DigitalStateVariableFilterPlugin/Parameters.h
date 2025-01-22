@@ -4,8 +4,6 @@
 
 #include <DigitalStateVariableFilterPlugin/Parameters/GenericParameterContainer.h>
 
-#include <bit>
-
 class Parameters final : public GenericParameterContainer
 {
 
@@ -17,10 +15,12 @@ public:
   void onbypass(std::function<void()> callback);
   void onfrequency(std::function<void()> callback);
   void onquality(std::function<void()> callback);
+  void onmix(std::function<void()> callback);
 
   bool bypass() const;
   double frequency() const;
   double quality() const;
+  std::vector<double> weights() const;
 
   void load(const void* data, const int size);
   void save(juce::MemoryBlock& data);

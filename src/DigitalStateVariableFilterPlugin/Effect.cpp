@@ -4,7 +4,7 @@ Effect::Effect(const double samplerate) :
   samplerate(samplerate)
 {
   filter = std::make_unique<Filter>(samplerate);
-  mixer = std::make_unique<Mixer>(1, 1, 1, 1, 1);
+  mixer = std::make_unique<Mixer>();
 }
 
 Effect::~Effect()
@@ -26,6 +26,17 @@ void Effect::quality(const double value)
 {
   filter->quality(value);
   filter->sync();
+}
+
+void Effect::weights(const std::vector<double> values)
+{
+  auto x  = values.at(0);
+  auto hp = values.at(1);
+  auto bp = values.at(2);
+  auto lp = values.at(3);
+  auto br = values.at(4);
+
+  mixer->set(x, hp, bp, lp, br);
 }
 
 void Effect::dry(const std::span<const float> input, const std::span<float> output)
