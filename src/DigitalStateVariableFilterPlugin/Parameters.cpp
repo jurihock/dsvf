@@ -5,13 +5,64 @@
 Parameters::Parameters(juce::AudioProcessor& process) :
   GenericParameterContainer(process)
 {
-  const auto dB = [](float x, int)
+  const auto fmt2int = [](float val, int)
   {
-    constexpr float e = std::numeric_limits<float>::epsilon();
-    constexpr float i = std::numeric_limits<float>::infinity();
-    const float y = (x > e) ? 20 * std::log10(x) : -i;
+    return juce::String::formatted("%.0f", val);
+  };
 
-    return juce::String::formatted("%.0f (%.2f)", y, x);
+  const auto fmt2flt = [](float val, int)
+  {
+    return juce::String::formatted("%.2f", val);
+  };
+
+  const auto fmt2log = [](float val, int)
+  {
+    constexpr float eps = std::numeric_limits<float>::epsilon();
+    constexpr float inf = std::numeric_limits<float>::infinity();
+
+    const auto log = (std::abs(val) < eps) ? -inf : 20 * std::log10(val);
+
+    return juce::String::formatted("%.0f (%.2f)", log, val);
+  };
+
+  const auto norm2log = [](float min, float max, float val) -> float
+  {
+    constexpr float eps = std::numeric_limits<float>::epsilon();
+
+    if (std::abs(val) < eps)
+    {
+      return 0;
+    }
+
+    min = std::max(min, 0.1f);
+
+    min = std::log(min + eps);
+    max = std::log(max + eps);
+
+    val = val * (max - min) + min;
+    val = std::exp(val);
+
+    return val;
+  };
+
+  const auto log2norm = [](float min, float max, float val) -> float
+  {
+    constexpr float eps = std::numeric_limits<float>::epsilon();
+
+    if (std::abs(val) < eps)
+    {
+      return 0;
+    }
+
+    min = std::max(min, 0.1f);
+
+    min = std::log(min + eps);
+    max = std::log(max + eps);
+
+    val = std::log(val);
+    val =  (val - min) / (max - min);
+
+    return val;
   };
 
   add("bypass", new juce::AudioParameterBool(
@@ -24,57 +75,59 @@ Parameters::Parameters(juce::AudioProcessor& process) :
 
   add("frequency", new juce::AudioParameterFloat(
     { "frequency", schema }, "Frequency",
-    juce::NormalisableRange<float>(20.0f, 20'000.0f, 10.0f), 1'000.0f,
+    juce::NormalisableRange<float>(20.0f, 20'000.0f, norm2log, log2norm), 1'000.0f,
     juce::AudioParameterFloatAttributes()
-      .withLabel("hz")));
+      .withLabel("hz")
+      .withStringFromValueFunction(fmt2int)));
 
   add("quality", new juce::AudioParameterFloat(
     { "quality", schema }, "Quality",
-    juce::NormalisableRange<float>(0.1f, 10.0f, 0.1f), 1.0f,
+    juce::NormalisableRange<float>(0.1f, 10.0f, norm2log, log2norm), 1.0f,
     juce::AudioParameterFloatAttributes()
-      .withLabel("q")));
+      .withLabel("q")
+      .withStringFromValueFunction(fmt2flt)));
 
   add("weights", new juce::AudioParameterFloat(
     { "dry", schema }, "Dry level",
-    juce::NormalisableRange<float>(0.0f, 10.0f, 0.1f), 1.0f,
+    juce::NormalisableRange<float>(0.0f, 10.0f, norm2log, log2norm), 1.0f,
     juce::AudioParameterFloatAttributes()
       .withLabel("dB")
-      .withStringFromValueFunction(dB)));
+      .withStringFromValueFunction(fmt2log)));
 
   add("weights", new juce::AudioParameterFloat(
     { "wet.hp", schema }, "HP level",
-    juce::NormalisableRange<float>(0.0f, 10.0f, 0.1f), 0.0f,
+    juce::NormalisableRange<float>(0.0f, 10.0f, norm2log, log2norm), 0.0f,
     juce::AudioParameterFloatAttributes()
-      .withLabel("dB")));
+      .withLabel("dB")
+      .withStringFromValueFunction(fmt2log)));
 
   add("weights", new juce::AudioParameterFloat(
     { "wet.lp", schema }, "LP level",
-    juce::NormalisableRange<float>(0.0f, 10.0f, 0.1f), 0.0f,
+    juce::NormalisableRange<float>(0.0f, 10.0f, norm2log, log2norm), 0.0f,
     juce::AudioParameterFloatAttributes()
-      .withLabel("dB")));
+      .withLabel("dB")
+      .withStringFromValueFunction(fmt2log)));
 
   add("weights", new juce::AudioParameterFloat(
     { "wet.bp", schema }, "BP level",
-    juce::NormalisableRange<float>(0.0f, 10.0f, 0.1f), 0.0f,
+    juce::NormalisableRange<float>(0.0f, 10.0f, norm2log, log2norm), 0.0f,
     juce::AudioParameterFloatAttributes()
-      .withLabel("dB")));
+      .withLabel("dB")
+      .withStringFromValueFunction(fmt2log)));
 
   add("weights", new juce::AudioParameterFloat(
     { "wet.br", schema }, "BR level",
-    juce::NormalisableRange<float>(0.0f, 10.0f, 0.1f), 0.0f,
+    juce::NormalisableRange<float>(0.0f, 10.0f, norm2log, log2norm), 0.0f,
     juce::AudioParameterFloatAttributes()
-      .withLabel("dB")));
+      .withLabel("dB")
+      .withStringFromValueFunction(fmt2log)));
 
   add("volume", new juce::AudioParameterFloat(
     { "volume", schema }, "Output level",
-    juce::NormalisableRange<float>(0.0f, 10.0f, 0.1f), 1.0f,
+    juce::NormalisableRange<float>(0.0f, 10.0f, norm2log, log2norm), 1.0f,
     juce::AudioParameterFloatAttributes()
       .withLabel("dB")
-      .withStringFromValueFunction(dB)));
-}
-
-Parameters::~Parameters()
-{
+      .withStringFromValueFunction(fmt2log)));
 }
 
 void Parameters::onbypass(std::function<void()> callback)

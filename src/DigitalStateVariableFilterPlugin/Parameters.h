@@ -10,7 +10,6 @@ class Parameters final : public GenericParameterContainer
 public:
 
   Parameters(juce::AudioProcessor& process);
-  ~Parameters();
 
   void onbypass(std::function<void()> callback);
   void onnormalize(std::function<void()> callback);
