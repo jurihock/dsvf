@@ -9,10 +9,17 @@
 class Processor final : public juce::AudioProcessor
 {
 
+private:
+
+  struct Config
+  {
+    double samplerate;
+    int blocksize;
+  };
+
 public:
 
   Processor();
-  ~Processor();
 
   const juce::String getName() const override;
 
@@ -42,20 +49,10 @@ public:
 
 private:
 
-  struct State
-  {
-    double samplerate {};
-    int blocksize {};
-  };
-
-  const State nostate;
-
   std::mutex mutex;
-  std::optional<State> state;
-  std::unique_ptr<Effect> effect;
-  std::shared_ptr<Parameters> parameters;
-
-  void resetEffect(const State& state);
+  std::optional<Config> config;
+  std::vector<std::unique_ptr<Effect>> effects;
+  std::unique_ptr<Parameters> parameters;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Processor)
 

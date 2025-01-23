@@ -78,7 +78,7 @@ void Effect::wet(const std::span<const float> input, const std::span<float> outp
     output.begin(),
     [&](const auto x)
     {
-      const auto y = static_cast<float>(config.gain);
+      const auto y = static_cast<decltype(x)>(config.gain);
       const auto [a, b, c, d, e] = filter->filter(x * y);
 
       return mixer->mix(a, b, c, d, e);

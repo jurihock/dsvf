@@ -9,47 +9,67 @@ Processor::Processor() :
       .withInput("Input",   juce::AudioChannelSet::stereo(), true)
       .withOutput("Output", juce::AudioChannelSet::stereo(), true))
 {
-  parameters = std::make_shared<Parameters>(*this);
+  parameters = std::make_unique<Parameters>(*this);
 
   parameters->onfrequency([&]()
   {
     std::lock_guard lock(mutex);
-    if (effect) { effect->frequency(parameters->frequency()); }
+
+    for (auto& effect : effects)
+    {
+      effect->frequency(parameters->frequency());
+    }
   });
 
   parameters->onquality([&]()
   {
     std::lock_guard lock(mutex);
-    if (effect) { effect->quality(parameters->quality()); }
+
+    for (auto& effect : effects)
+    {
+      effect->quality(parameters->quality());
+    }
   });
 
   parameters->onnormalize([&]()
   {
     std::lock_guard lock(mutex);
-    if (effect) { effect->normalize(parameters->normalize()); }
+
+    for (auto& effect : effects)
+    {
+      effect->normalize(parameters->normalize());
+    }
   });
 
   parameters->ongain([&]()
   {
     std::lock_guard lock(mutex);
-    if (effect) { effect->gain(parameters->gain()); }
+
+    for (auto& effect : effects)
+    {
+      effect->gain(parameters->gain());
+    }
   });
 
   parameters->onvolume([&]()
   {
     std::lock_guard lock(mutex);
-    if (effect) { effect->volume(parameters->volume()); }
+
+    for (auto& effect : effects)
+    {
+      effect->volume(parameters->volume());
+    }
   });
 
   parameters->onweights([&]()
   {
     std::lock_guard lock(mutex);
-    if (effect) { effect->weights(parameters->weights()); }
-  });
-}
 
-Processor::~Processor()
-{
+    for (auto& effect : effects)
+    {
+      effect->weights(parameters->weights());
+    }
+  });
 }
 
 const juce::String Processor::getName() const
@@ -106,8 +126,10 @@ void Processor::prepareToPlay(double samplerate, int blocksize)
 {
   std::lock_guard lock(mutex);
 
-  state = std::nullopt;
-  effect = nullptr;
+  LOG("Release resources");
+
+  config.reset();
+  effects.clear();
 
   if (samplerate < 1)
   {
@@ -123,17 +145,51 @@ void Processor::prepareToPlay(double samplerate, int blocksize)
 
   LOG("Prepare to play (samplerate %g, blocksize %d)", samplerate, blocksize);
 
-  state = { samplerate, blocksize };
+  config =
+  {
+    .samplerate = samplerate,
+    .blocksize = blocksize
+  };
 
   try
   {
-    resetEffect(state.value());
+    for (auto i = 0; i < 2; ++i)
+    {
+      const auto frequency = parameters->frequency();
+      const auto quality = parameters->quality();
+      const auto normalize = parameters->normalize();
+      const auto gain = parameters->gain();
+      const auto volume = parameters->volume();
+      const auto weights = parameters->weights();
+
+      auto effect = std::make_unique<Effect>(samplerate);
+
+      effect->frequency(frequency);
+      effect->quality(quality);
+      effect->normalize(normalize);
+      effect->gain(gain);
+      effect->volume(volume);
+      effect->weights(weights);
+
+      effects.push_back(std::move(effect));
+
+      if (i < 1)
+      {
+        const auto latency = effects.at(0)->latency();
+
+        LOG("Latency %d (%d ms)", latency, static_cast<int>(1e+3 * latency / samplerate));
+
+        setLatencySamples(latency);
+      }
+    }
   }
   catch(const std::exception& exception)
   {
     juce::ignoreUnused(exception);
 
     LOG(exception.what());
+
+    effects.clear();
   }
 }
 
@@ -143,8 +199,8 @@ void Processor::releaseResources()
 
   LOG("Release resources");
 
-  state = std::nullopt;
-  effect = nullptr;
+  config.reset();
+  effects.clear();
 }
 
 void Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer& midi)
@@ -177,23 +233,44 @@ void Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer& 
     return;
   }
 
-  const auto process_mono_input = [&]()
+  const auto process_stereo_input = [&]()
   {
-    auto input = std::span<const float>(
-      audio.getReadPointer(0),
-      static_cast<size_t>(channel_samples));
-
-    auto output = std::span<float>(
-      audio.getWritePointer(0),
-      static_cast<size_t>(channel_samples));
-
-    if (parameters->bypass())
+    const int processible_channels = std::min(
     {
-      effect->dry(input, output);
+      input_channels,
+      output_channels,
+      static_cast<int>(effects.size())
+    });
+
+    const int remaining_channels = std::min(
+    {
+      output_channels,
+      static_cast<int>(effects.size())
+    });
+
+    for (int channel = 0; channel < processible_channels; ++channel)
+    {
+      auto input = std::span<const float>(
+        audio.getReadPointer(channel),
+        static_cast<size_t>(channel_samples));
+
+      auto output = std::span<float>(
+        audio.getWritePointer(channel),
+        static_cast<size_t>(channel_samples));
+
+      if (parameters->bypass())
+      {
+        effects.at(channel)->dry(input, output);
+      }
+      else
+      {
+        effects.at(channel)->wet(input, output);
+      }
     }
-    else
+
+    for (int channel = processible_channels; channel < remaining_channels; ++channel)
     {
-      effect->wet(input, output);
+      audio.copyFrom(channel, 0, audio, 0, 0, channel_samples);
     }
   };
 
@@ -212,32 +289,19 @@ void Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer& 
 
   TIC();
 
-  if (!state)
+  if (!config)
   {
-    process_stereo_output("state is not initialized");
+    process_stereo_output("plugin is not prepared");
   }
-  else if (!effect)
+  else if (!effects.size())
   {
-    process_stereo_output("effect is not initialized");
+    process_stereo_output("effects are not initialized");
   }
   else
   {
-    if (state.value().blocksize != channel_samples)
-    {
-      State oldstate = state.value();
-      State newstate = oldstate;
-
-      newstate.blocksize = channel_samples;
-
-      LOG("Change blocksize from %d to %d", oldstate.blocksize, newstate.blocksize);
-
-      state = newstate;
-    }
-
     try
     {
-      process_mono_input();
-      process_stereo_output();
+      process_stereo_input();
     }
     catch(const std::exception& exception)
     {
@@ -249,39 +313,10 @@ void Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer& 
 
   if (LAP())
   {
-    const double samplerate = state.value_or(nostate).samplerate;
-    const int blocksize  = state.value_or(nostate).blocksize;
+    const auto [sr, bs] = config.value_or(Config{});
 
-    juce::ignoreUnused(samplerate, blocksize);
+    juce::ignoreUnused(sr, bs);
 
-    LOG(CHRONOMETRY(samplerate, blocksize));
+    LOG(CHRONOMETRY(sr, bs));
   }
-}
-
-void Processor::resetEffect(const State& state)
-{
-  const double samplerate = state.samplerate;
-  const double frequency = parameters->frequency();
-  const double quality = parameters->quality();
-  const bool normalize = parameters->normalize();
-  const double gain = parameters->gain();
-  const double volume = parameters->volume();
-  const std::vector<double> weights = parameters->weights();
-
-  LOG("Reset effect");
-
-  effect = std::make_unique<Effect>(samplerate);
-
-  effect->frequency(frequency);
-  effect->quality(quality);
-  effect->normalize(normalize);
-  effect->gain(gain);
-  effect->volume(volume);
-  effect->weights(weights);
-
-  const int latency = effect->latency();
-
-  LOG("Latency %d (%d ms)", latency, static_cast<int>(1e+3 * latency / samplerate));
-
-  setLatencySamples(latency);
 }

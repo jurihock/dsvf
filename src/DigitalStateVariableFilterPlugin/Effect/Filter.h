@@ -119,17 +119,15 @@ public:
     const auto lp = dot(z, coeffs.lp);
     const auto br = hp + lp;
 
-    const auto state = std::make_tuple(
+    z[2] += c[2] * z[1];
+    z[1] += c[1] * z[0];
+
+    return std::make_tuple(
       value,
       static_clip<T>(hp),
       static_clip<T>(bp),
       static_clip<T>(lp),
       static_clip<T>(br));
-
-    z[2] += c[2] * z[1];
-    z[1] += c[1] * z[0];
-
-    return state;
   }
 
 private:
