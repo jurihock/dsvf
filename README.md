@@ -7,6 +7,8 @@
 
 A [JUCE](https://github.com/juce-framework/JUCE) plug-in providing a collection of configurable digital filters (such as HP, LP, BP, and BR) according to [[1]](#1) and [[2]](#2).
 
+<img src="assets/screenshot.png" width="500">
+
 ## References
 
 1. <span id="1">[Digital State-Variable Filters](https://kokkinizita.linuxaudio.org/papers/digsvfilt.pdf) by Fons Adriaensen</span>
