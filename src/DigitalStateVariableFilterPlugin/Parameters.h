@@ -16,6 +16,7 @@ public:
   void onfrequency(std::function<void()> callback);
   void onquality(std::function<void()> callback);
   void onweights(std::function<void()> callback);
+  void ongain(std::function<void()> callback);
   void onvolume(std::function<void()> callback);
 
   bool bypass() const;
@@ -23,6 +24,7 @@ public:
   double frequency() const;
   double quality() const;
   std::vector<double> weights() const;
+  double gain() const;
   double volume() const;
 
   void load(const void* data, const int size);

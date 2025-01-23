@@ -20,7 +20,7 @@ Parameters::Parameters(juce::AudioProcessor& process) :
     constexpr float eps = std::numeric_limits<float>::epsilon();
     constexpr float inf = std::numeric_limits<float>::infinity();
 
-    const auto log = (std::abs(val) < eps) ? -inf : 20 * std::log10(val);
+    const float log = (std::abs(val) < eps) ? -inf : 20 * std::log10(val);
 
     return juce::String::formatted("%.0f (%.2f)", log, val);
   };
@@ -36,8 +36,8 @@ Parameters::Parameters(juce::AudioProcessor& process) :
 
     min = std::max(min, 0.1f);
 
-    min = std::log(min + eps);
-    max = std::log(max + eps);
+    min = std::log(min);
+    max = std::log(max);
 
     val = val * (max - min) + min;
     val = std::exp(val);
@@ -56,8 +56,8 @@ Parameters::Parameters(juce::AudioProcessor& process) :
 
     min = std::max(min, 0.1f);
 
-    min = std::log(min + eps);
-    max = std::log(max + eps);
+    min = std::log(min);
+    max = std::log(max);
 
     val = std::log(val);
     val =  (val - min) / (max - min);
@@ -77,57 +77,64 @@ Parameters::Parameters(juce::AudioProcessor& process) :
     { "frequency", schema }, "Frequency",
     juce::NormalisableRange<float>(20.0f, 20'000.0f, norm2log, log2norm), 1'000.0f,
     juce::AudioParameterFloatAttributes()
-      .withLabel("hz")
-      .withStringFromValueFunction(fmt2int)));
+      .withStringFromValueFunction(fmt2int)
+      .withLabel("hz")));
 
   add("quality", new juce::AudioParameterFloat(
     { "quality", schema }, "Quality",
     juce::NormalisableRange<float>(0.1f, 10.0f, norm2log, log2norm), 1.0f,
     juce::AudioParameterFloatAttributes()
-      .withLabel("q")
-      .withStringFromValueFunction(fmt2flt)));
+      .withStringFromValueFunction(fmt2flt)
+      .withLabel("q")));
 
   add("weights", new juce::AudioParameterFloat(
     { "dry", schema }, "Dry level",
     juce::NormalisableRange<float>(0.0f, 10.0f, norm2log, log2norm), 1.0f,
     juce::AudioParameterFloatAttributes()
-      .withLabel("dB")
-      .withStringFromValueFunction(fmt2log)));
+      .withStringFromValueFunction(fmt2log)
+      .withLabel("dB")));
 
   add("weights", new juce::AudioParameterFloat(
     { "wet.hp", schema }, "HP level",
     juce::NormalisableRange<float>(0.0f, 10.0f, norm2log, log2norm), 0.0f,
     juce::AudioParameterFloatAttributes()
-      .withLabel("dB")
-      .withStringFromValueFunction(fmt2log)));
+      .withStringFromValueFunction(fmt2log)
+      .withLabel("dB")));
 
   add("weights", new juce::AudioParameterFloat(
     { "wet.lp", schema }, "LP level",
     juce::NormalisableRange<float>(0.0f, 10.0f, norm2log, log2norm), 0.0f,
     juce::AudioParameterFloatAttributes()
-      .withLabel("dB")
-      .withStringFromValueFunction(fmt2log)));
+      .withStringFromValueFunction(fmt2log)
+      .withLabel("dB")));
 
   add("weights", new juce::AudioParameterFloat(
     { "wet.bp", schema }, "BP level",
     juce::NormalisableRange<float>(0.0f, 10.0f, norm2log, log2norm), 0.0f,
     juce::AudioParameterFloatAttributes()
-      .withLabel("dB")
-      .withStringFromValueFunction(fmt2log)));
+      .withStringFromValueFunction(fmt2log)
+      .withLabel("dB")));
 
   add("weights", new juce::AudioParameterFloat(
     { "wet.br", schema }, "BR level",
     juce::NormalisableRange<float>(0.0f, 10.0f, norm2log, log2norm), 0.0f,
     juce::AudioParameterFloatAttributes()
-      .withLabel("dB")
-      .withStringFromValueFunction(fmt2log)));
+      .withStringFromValueFunction(fmt2log)
+      .withLabel("dB")));
+
+  add("gain", new juce::AudioParameterFloat(
+    { "gain", schema }, "Input level",
+    juce::NormalisableRange<float>(0.0f, 10.0f, norm2log, log2norm), 1.0f,
+    juce::AudioParameterFloatAttributes()
+      .withStringFromValueFunction(fmt2log)
+      .withLabel("dB")));
 
   add("volume", new juce::AudioParameterFloat(
     { "volume", schema }, "Output level",
     juce::NormalisableRange<float>(0.0f, 10.0f, norm2log, log2norm), 1.0f,
     juce::AudioParameterFloatAttributes()
-      .withLabel("dB")
-      .withStringFromValueFunction(fmt2log)));
+      .withStringFromValueFunction(fmt2log)
+      .withLabel("dB")));
 }
 
 void Parameters::onbypass(std::function<void()> callback)
@@ -153,6 +160,11 @@ void Parameters::onquality(std::function<void()> callback)
 void Parameters::onweights(std::function<void()> callback)
 {
   call("weights", callback);
+}
+
+void Parameters::ongain(std::function<void()> callback)
+{
+  call("gain", callback);
 }
 
 void Parameters::onvolume(std::function<void()> callback)
@@ -193,6 +205,11 @@ std::vector<double> Parameters::weights() const
   };
 }
 
+double Parameters::gain() const
+{
+  return get<double>("gain");
+}
+
 double Parameters::volume() const
 {
   return get<double>("volume");
@@ -226,6 +243,7 @@ void Parameters::load(const void* data, const int size)
     read<double>("wet.lp", *xml);
     read<double>("wet.bp", *xml);
     read<double>("wet.br", *xml);
+    read<double>("gain", *xml);
     read<double>("volume", *xml);
   }
   catch(const std::exception& exception)
@@ -253,6 +271,7 @@ void Parameters::save(juce::MemoryBlock& data)
     write<double>("wet.lp", *xml);
     write<double>("wet.bp", *xml);
     write<double>("wet.br", *xml);
+    write<double>("gain", *xml);
     write<double>("volume", *xml);
 
     LOG(xml->toString(juce::XmlElement::TextFormat().withoutHeader()));

@@ -1,7 +1,10 @@
 #include <DigitalStateVariableFilterPlugin/Effect.h>
 
 Effect::Effect(const double samplerate) :
-  samplerate(samplerate)
+  config({
+    .samplerate = samplerate,
+    .gain = 1
+  })
 {
   filter = std::make_unique<Filter>(samplerate);
   mixer = std::make_unique<Mixer>();
@@ -27,6 +30,11 @@ void Effect::quality(const double value)
 void Effect::normalize(const bool value)
 {
   mixer->normalize(value);
+}
+
+void Effect::gain(const double value)
+{
+  config.gain = value;
 }
 
 void Effect::volume(const double value)
@@ -70,7 +78,8 @@ void Effect::wet(const std::span<const float> input, const std::span<float> outp
     output.begin(),
     [&](const auto x)
     {
-      const auto [a, b, c, d, e] = filter->filter(x);
+      const auto y = static_cast<float>(config.gain);
+      const auto [a, b, c, d, e] = filter->filter(x * y);
 
       return mixer->mix(a, b, c, d, e);
 

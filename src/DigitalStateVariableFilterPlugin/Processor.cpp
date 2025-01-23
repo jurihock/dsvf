@@ -29,6 +29,12 @@ Processor::Processor() :
     if (effect) { effect->normalize(parameters->normalize()); }
   });
 
+  parameters->ongain([&]()
+  {
+    std::lock_guard lock(mutex);
+    if (effect) { effect->gain(parameters->gain()); }
+  });
+
   parameters->onvolume([&]()
   {
     std::lock_guard lock(mutex);
@@ -258,6 +264,7 @@ void Processor::resetEffect(const State& state)
   const double frequency = parameters->frequency();
   const double quality = parameters->quality();
   const bool normalize = parameters->normalize();
+  const double gain = parameters->gain();
   const double volume = parameters->volume();
   const std::vector<double> weights = parameters->weights();
 
@@ -268,6 +275,7 @@ void Processor::resetEffect(const State& state)
   effect->frequency(frequency);
   effect->quality(quality);
   effect->normalize(normalize);
+  effect->gain(gain);
   effect->volume(volume);
   effect->weights(weights);
 
