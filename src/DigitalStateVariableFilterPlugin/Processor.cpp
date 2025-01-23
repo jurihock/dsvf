@@ -235,20 +235,20 @@ void Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer& 
 
   const auto process_stereo_input = [&]()
   {
-    const int processible_channels = std::min(
+    const int min_channels = std::min(
     {
       input_channels,
       output_channels,
       static_cast<int>(effects.size())
     });
 
-    const int remaining_channels = std::min(
+    const int max_channels = std::min(
     {
       output_channels,
       static_cast<int>(effects.size())
     });
 
-    for (int channel = 0; channel < processible_channels; ++channel)
+    for (int channel = 0; channel < min_channels; ++channel)
     {
       auto input = std::span<const float>(
         audio.getReadPointer(channel),
@@ -268,7 +268,7 @@ void Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer& 
       }
     }
 
-    for (int channel = processible_channels; channel < remaining_channels; ++channel)
+    for (int channel = min_channels; channel < max_channels; ++channel)
     {
       audio.copyFrom(channel, 0, audio, 0, 0, channel_samples);
     }
