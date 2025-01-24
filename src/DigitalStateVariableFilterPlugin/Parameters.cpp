@@ -1,6 +1,6 @@
 #include <DigitalStateVariableFilterPlugin/Parameters.h>
 
-#include <DigitalStateVariableFilterPlugin/Logger.h>
+#include <DigitalStateVariableFilterPlugin/Utils/Logger.h>
 
 Parameters::Parameters(juce::AudioProcessor& process) :
   GenericParameterContainer(process)

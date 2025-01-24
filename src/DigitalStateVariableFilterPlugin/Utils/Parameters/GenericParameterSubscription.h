@@ -2,7 +2,7 @@
 
 #include <JuceHeader.h>
 
-#include <DigitalStateVariableFilterPlugin/Parameters/GenericParameterListener.h>
+#include <DigitalStateVariableFilterPlugin/Utils/Parameters/GenericParameterListener.h>
 
 class GenericParameterSubscription final
 {
@@ -11,14 +11,16 @@ public:
 
   GenericParameterSubscription(juce::AudioProcessorParameter* parameter,
                                std::function<void()> callback) :
-    GenericParameterSubscription(parameter, std::make_shared<GenericParameterListener>(callback))
+    GenericParameterSubscription(
+      parameter,
+      std::make_unique<GenericParameterListener>(std::move(callback)))
   {
   }
 
   GenericParameterSubscription(juce::AudioProcessorParameter* parameter,
-                               std::shared_ptr<juce::AudioProcessorParameter::Listener> listener) :
+                               std::unique_ptr<juce::AudioProcessorParameter::Listener> listener) :
     parameter(parameter),
-    listener(listener)
+    listener(std::move(listener))
   {
     subscribe();
   }
@@ -31,7 +33,7 @@ public:
 private:
 
   juce::AudioProcessorParameter* parameter;
-  std::shared_ptr<juce::AudioProcessorParameter::Listener> listener;
+  std::unique_ptr<juce::AudioProcessorParameter::Listener> listener;
 
   void subscribe()
   {

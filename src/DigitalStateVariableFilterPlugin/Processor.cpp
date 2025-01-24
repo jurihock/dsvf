@@ -1,7 +1,7 @@
 #include <DigitalStateVariableFilterPlugin/Processor.h>
 
-#include <DigitalStateVariableFilterPlugin/Chronometer.h>
-#include <DigitalStateVariableFilterPlugin/Logger.h>
+#include <DigitalStateVariableFilterPlugin/Utils/Chronometer.h>
+#include <DigitalStateVariableFilterPlugin/Utils/Logger.h>
 
 Processor::Processor() :
   juce::AudioProcessor(

@@ -2,7 +2,7 @@
 
 #include <JuceHeader.h>
 
-#include <DigitalStateVariableFilterPlugin/Parameters/GenericParameterContainer.h>
+#include <DigitalStateVariableFilterPlugin/Utils/Parameters/GenericParameterContainer.h>
 
 class Parameters final : public GenericParameterContainer
 {

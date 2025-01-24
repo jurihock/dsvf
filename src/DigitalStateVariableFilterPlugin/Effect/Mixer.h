@@ -76,7 +76,7 @@ public:
   }
 
   template<typename T, typename... Ts, typename = AllSame<T, Ts...>>
-  void weights(const T weight, const Ts... weights)
+  void weights(const T value, const Ts... values)
   {
     const auto N = std::tuple_size_v<Weights::Vector>;
     const auto M = sizeof...(Ts) + 1;
@@ -85,8 +85,8 @@ public:
 
     config.weights =
     {
-      static_cast<Weights::Scalar>(weight),
-      static_cast<Weights::Scalar>(weights)...
+      static_cast<Weights::Scalar>(value),
+      static_cast<Weights::Scalar>(values)...
     };
 
     config.normfactor = dot(config.weights);

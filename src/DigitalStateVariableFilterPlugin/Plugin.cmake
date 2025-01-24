@@ -10,7 +10,7 @@ endif()
 
 juce_add_plugin(${CMAKE_PROJECT_NAME}
   PLUGIN_NAME                   "${CMAKE_PROJECT_NAME} v${CMAKE_PROJECT_VERSION}"
-  DESCRIPTION                   "Real-time poly pitch and timbre shifting plugin"
+  DESCRIPTION                   "${CMAKE_PROJECT_DESCRIPTION}"
   PRODUCT_NAME                  "${CMAKE_PROJECT_NAME}"
   VERSION                       "${CMAKE_PROJECT_VERSION}"
   COMPANY_NAME                  "jurihock"

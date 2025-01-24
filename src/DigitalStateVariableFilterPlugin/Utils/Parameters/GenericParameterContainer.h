@@ -2,16 +2,18 @@
 
 #include <JuceHeader.h>
 
-#include <DigitalStateVariableFilterPlugin/Parameters/GenericParameterListener.h>
-#include <DigitalStateVariableFilterPlugin/Parameters/GenericParameterSubscription.h>
+#include <DigitalStateVariableFilterPlugin/Utils/Parameters/GenericParameterListener.h>
+#include <DigitalStateVariableFilterPlugin/Utils/Parameters/GenericParameterSubscription.h>
 
 class GenericParameterContainer
 {
 
 public:
 
-  GenericParameterContainer(juce::AudioProcessor& process) : process(process) {}
-  virtual ~GenericParameterContainer() {}
+  GenericParameterContainer(juce::AudioProcessor& process) :
+    process(process)
+  {
+  }
 
   juce::RangedAudioParameter* get(const std::string& id) const
   {
@@ -52,16 +54,16 @@ protected:
       }
     };
 
-    auto subscription = std::make_shared<GenericParameterSubscription>(parameter, callback);
+    auto subscription = std::make_unique<GenericParameterSubscription>(parameter, callback);
 
     parameters[id] = parameter;
-    subscriptions.push_back(subscription);
+    subscriptions.push_back(std::move(subscription));
     process.addParameter(parameter);
   }
 
   void call(const std::string& ns, std::function<void()> callback)
   {
-    callbacks[ns].push_back(callback);
+    callbacks[ns].push_back(std::move(callback));
   }
 
   template<typename T>
@@ -84,7 +86,7 @@ private:
   juce::AudioProcessor& process;
 
   std::map<std::string, juce::RangedAudioParameter*> parameters;
-  std::vector<std::shared_ptr<GenericParameterSubscription>> subscriptions;
+  std::vector<std::unique_ptr<GenericParameterSubscription>> subscriptions;
   std::map<std::string, std::vector<std::function<void()>>> callbacks;
 
 };
@@ -167,7 +169,7 @@ inline void GenericParameterContainer::set<std::string>(const std::string& id, c
   auto* parameter = dynamic_cast<juce::AudioParameterChoice*>(parameters.at(id));
 
   const juce::StringArray& choices = parameter->choices;
-  const int index = choices.indexOf(value, true);
+  const int index = choices.indexOf(std::move(value), true);
 
   if (index >= 0)
   {

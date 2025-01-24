@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.1...3.18)
 
-project(DigitalStateVariableFilterPlugin VERSION 1.0)
+project(DigitalStateVariableFilterPlugin
+        DESCRIPTION "Tunable digital filters (HP, LP, BP, BR)"
+        VERSION 1.0)
 
 option(FASTMATH "Enable fast math"    OFF)
 option(LOGGING  "Enable runtime logs" OFF)

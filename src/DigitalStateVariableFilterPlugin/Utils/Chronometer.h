@@ -2,7 +2,7 @@
 
 #if defined(ENABLE_PLUGIN_CHRONOMETER)
 
-  #include <DigitalStateVariableFilterPlugin/Timer.h>
+  #include <DigitalStateVariableFilterPlugin/Utils/Timer.h>
 
   static Timer<std::chrono::microseconds> chronometer;
 
