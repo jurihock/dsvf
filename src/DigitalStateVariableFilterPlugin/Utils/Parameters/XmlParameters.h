@@ -33,6 +33,12 @@ private:
   template<class... T>
   struct visitor : T... { using T::operator()...; };
 
+  // explicit deduction guide,
+  // which is actually not needed as of C++ 20,
+  // but still required for Apple Clang 15
+  template<class... Ts>
+  visitor(Ts...) -> visitor<Ts...>;
+
   template<typename T>
   void read(const std::string& id, juce::XmlElement& parent) const
   {
