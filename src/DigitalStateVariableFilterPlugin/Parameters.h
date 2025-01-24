@@ -2,9 +2,9 @@
 
 #include <JuceHeader.h>
 
-#include <DigitalStateVariableFilterPlugin/Utils/Parameters/GenericParameterContainer.h>
+#include <DigitalStateVariableFilterPlugin/Utils/Parameters/XmlParameters.h>
 
-class Parameters final : public GenericParameterContainer
+class Parameters final : public XmlParameters
 {
 
 public:
@@ -27,12 +27,7 @@ public:
   double gain() const;
   double volume() const;
 
-  void load(const void* data, const int size);
-  void save(juce::MemoryBlock& data);
-
 private:
-
-  const int schema = 1;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Parameters)
 

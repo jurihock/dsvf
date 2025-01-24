@@ -66,16 +66,12 @@ protected:
     callbacks[ns].push_back(std::move(callback));
   }
 
-  template<typename T>
-  void read(const std::string& id, juce::XmlElement& parent) const
+  void visit(std::function<void(const std::string& id, const juce::RangedAudioParameter* parameter)> callback)
   {
-    static_assert(missing_template_specialization<T>::value);
-  }
-
-  template<typename T>
-  void write(const std::string& id, juce::XmlElement& parent) const
-  {
-    static_assert(missing_template_specialization<T>::value);
+    for (const auto& [id, parameter] : parameters)
+    {
+      callback(id, parameter);
+    }
   }
 
 private:
@@ -175,99 +171,4 @@ inline void GenericParameterContainer::set<std::string>(const std::string& id, c
   {
     *parameter = index;
   }
-}
-
-template<>
-inline void GenericParameterContainer::read<bool>(const std::string& id, juce::XmlElement& parent) const
-{
-  juce::XmlElement* child = parent.getChildByName(id);
-  if (!child) { return; }
-
-  juce::String value = child->getAllSubText();
-  if (value.isEmpty()) { return; }
-
-  set<bool>(id, value == "true");
-}
-
-template<>
-inline void GenericParameterContainer::read<int>(const std::string& id, juce::XmlElement& parent) const
-{
-  juce::XmlElement* child = parent.getChildByName(id);
-  if (!child) { return; }
-
-  juce::String value = child->getAllSubText();
-  if (value.isEmpty()) { return; }
-
-  set<int>(id, value.getIntValue());
-}
-
-template<>
-inline void GenericParameterContainer::read<float>(const std::string& id, juce::XmlElement& parent) const
-{
-  juce::XmlElement* child = parent.getChildByName(id);
-  if (!child) { return; }
-
-  juce::String value = child->getAllSubText();
-  if (value.isEmpty()) { return; }
-
-  set<float>(id, value.getFloatValue());
-}
-
-template<>
-inline void GenericParameterContainer::read<double>(const std::string& id, juce::XmlElement& parent) const
-{
-  juce::XmlElement* child = parent.getChildByName(id);
-  if (!child) { return; }
-
-  juce::String value = child->getAllSubText();
-  if (value.isEmpty()) { return; }
-
-  set<double>(id, value.getDoubleValue());
-}
-
-template<>
-inline void GenericParameterContainer::read<std::string>(const std::string& id, juce::XmlElement& parent) const
-{
-  juce::XmlElement* child = parent.getChildByName(id);
-  if (!child) { return; }
-
-  juce::String value = child->getAllSubText();
-  if (value.isEmpty()) { return; }
-
-  set<std::string>(id, value.toStdString());
-}
-
-template<>
-inline void GenericParameterContainer::write<bool>(const std::string& id, juce::XmlElement& parent) const
-{
-  juce::XmlElement* child = parent.createNewChildElement(id);
-  child->addTextElement(get<bool>(id) ? "true" : "false");
-}
-
-template<>
-inline void GenericParameterContainer::write<int>(const std::string& id, juce::XmlElement& parent) const
-{
-  juce::XmlElement* child = parent.createNewChildElement(id);
-  child->addTextElement(juce::String(get<int>(id)));
-}
-
-template<>
-inline void GenericParameterContainer::write<float>(const std::string& id, juce::XmlElement& parent) const
-{
-  juce::XmlElement* child = parent.createNewChildElement(id);
-  child->addTextElement(juce::String(get<float>(id)));
-}
-
-template<>
-inline void GenericParameterContainer::write<double>(const std::string& id, juce::XmlElement& parent) const
-{
-  juce::XmlElement* child = parent.createNewChildElement(id);
-  child->addTextElement(juce::String(get<double>(id)));
-}
-
-template<>
-inline void GenericParameterContainer::write<std::string>(const std::string& id, juce::XmlElement& parent) const
-{
-  juce::XmlElement* child = parent.createNewChildElement(id);
-  child->addTextElement(juce::String(get<std::string>(id)));
 }

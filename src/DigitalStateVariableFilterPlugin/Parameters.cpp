@@ -1,9 +1,7 @@
 #include <DigitalStateVariableFilterPlugin/Parameters.h>
 
-#include <DigitalStateVariableFilterPlugin/Utils/Logger.h>
-
 Parameters::Parameters(juce::AudioProcessor& process) :
-  GenericParameterContainer(process)
+  XmlParameters(process, 1)
 {
   const auto fmt2int = [](float val, int)
   {
@@ -172,7 +170,6 @@ void Parameters::onvolume(std::function<void()> callback)
   call("volume", callback);
 }
 
-
 bool Parameters::bypass() const
 {
   return get<bool>("bypass");
@@ -213,75 +210,4 @@ double Parameters::gain() const
 double Parameters::volume() const
 {
   return get<double>("volume");
-}
-
-void Parameters::load(const void* data, const int size)
-{
-  try
-  {
-    auto xml = std::unique_ptr<juce::XmlElement>(
-      juce::AudioProcessor::getXmlFromBinary(data, size));
-
-    if (xml)
-    {
-      LOG(xml->toString(juce::XmlElement::TextFormat().withoutHeader()));
-    }
-    else
-    {
-      return;
-    }
-
-    if (xml->hasTagName(ProjectInfo::projectName) == false) { return; }
-    if (xml->getIntAttribute("schema") != schema) { return; }
-
-    read<bool>("bypass", *xml);
-    read<bool>("normalize", *xml);
-    read<double>("frequency", *xml);
-    read<double>("quality", *xml);
-    read<double>("dry", *xml);
-    read<double>("wet.hp", *xml);
-    read<double>("wet.lp", *xml);
-    read<double>("wet.bp", *xml);
-    read<double>("wet.br", *xml);
-    read<double>("gain", *xml);
-    read<double>("volume", *xml);
-  }
-  catch(const std::exception& exception)
-  {
-    juce::ignoreUnused(exception);
-
-    LOG(exception.what());
-  }
-}
-
-void Parameters::save(juce::MemoryBlock& data)
-{
-  try
-  {
-    auto xml = std::make_unique<juce::XmlElement>(ProjectInfo::projectName);
-
-    xml->setAttribute("schema", schema);
-
-    write<bool>("bypass", *xml);
-    write<bool>("normalize", *xml);
-    write<double>("frequency", *xml);
-    write<double>("quality", *xml);
-    write<double>("dry", *xml);
-    write<double>("wet.hp", *xml);
-    write<double>("wet.lp", *xml);
-    write<double>("wet.bp", *xml);
-    write<double>("wet.br", *xml);
-    write<double>("gain", *xml);
-    write<double>("volume", *xml);
-
-    LOG(xml->toString(juce::XmlElement::TextFormat().withoutHeader()));
-
-    juce::AudioProcessor::copyXmlToBinary(*xml, data);
-  }
-  catch(const std::exception& exception)
-  {
-    juce::ignoreUnused(exception);
-
-    LOG(exception.what());
-  }
 }
