@@ -90,7 +90,7 @@ public:
   {
     const auto pi = std::numbers::pi;
     const auto sr = config.samplerate;
-    const auto f  = config.frequency;
+    const auto f  = std::clamp<decltype(config.frequency)>(config.frequency, 0, config.samplerate / 2);
     const auto q  = config.quality;
 
     const auto w = 2 * std::tan(pi * f / sr);
