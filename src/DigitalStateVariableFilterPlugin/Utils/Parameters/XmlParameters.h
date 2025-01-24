@@ -30,6 +30,9 @@ private:
   template<typename T>
   struct missing_template_specialization : std::false_type {};
 
+  template<class... T>
+  struct visitor : T... { using T::operator()...; };
+
   template<typename T>
   void read(const std::string& id, juce::XmlElement& parent) const
   {
@@ -139,33 +142,14 @@ inline void XmlParameters::load(const void* data, const int size)
     if (xml->hasTagName(tag) != true) { return; }
     if (xml->getIntAttribute("schema") != schema) { return; }
 
-    visit([&](const std::string& id, const juce::RangedAudioParameter* parameter)
+    visit([&](const std::string& id, const AnyRangedAudioParameter& parameter)
     {
-      if (dynamic_cast<const juce::AudioParameterBool*>(parameter))
-      {
-        read<bool>(id, *xml);
-        return;
-      }
-
-      if (dynamic_cast<const juce::AudioParameterInt*>(parameter))
-      {
-        read<int>(id, *xml);
-        return;
-      }
-
-      if (dynamic_cast<const juce::AudioParameterFloat*>(parameter))
-      {
-        read<float>(id, *xml);
-        return;
-      }
-
-      if (dynamic_cast<const juce::AudioParameterChoice*>(parameter))
-      {
-        read<std::string>(id, *xml);
-        return;
-      }
-
-      throw std::invalid_argument("Unsupported parameter type!");
+      std::visit(visitor{
+        [&](juce::AudioParameterBool*)   { read<bool>(id, *xml);        },
+        [&](juce::AudioParameterInt*)    { read<int>(id, *xml);         },
+        [&](juce::AudioParameterFloat*)  { read<float>(id, *xml);       },
+        [&](juce::AudioParameterChoice*) { read<std::string>(id, *xml); }
+      }, parameter);
     });
   }
   catch(const std::exception& exception)
@@ -184,33 +168,14 @@ inline void XmlParameters::save(juce::MemoryBlock& data)
 
     xml->setAttribute("schema", schema);
 
-    visit([&](const std::string& id, const juce::RangedAudioParameter* parameter)
+    visit([&](const std::string& id, const AnyRangedAudioParameter& parameter)
     {
-      if (dynamic_cast<const juce::AudioParameterBool*>(parameter))
-      {
-        write<bool>(id, *xml);
-        return;
-      }
-
-      if (dynamic_cast<const juce::AudioParameterInt*>(parameter))
-      {
-        write<int>(id, *xml);
-        return;
-      }
-
-      if (dynamic_cast<const juce::AudioParameterFloat*>(parameter))
-      {
-        write<float>(id, *xml);
-        return;
-      }
-
-      if (dynamic_cast<const juce::AudioParameterChoice*>(parameter))
-      {
-        write<std::string>(id, *xml);
-        return;
-      }
-
-      throw std::invalid_argument("Unsupported parameter type!");
+      std::visit(visitor{
+        [&](juce::AudioParameterBool*)   { write<bool>(id, *xml);        },
+        [&](juce::AudioParameterInt*)    { write<int>(id, *xml);         },
+        [&](juce::AudioParameterFloat*)  { write<float>(id, *xml);       },
+        [&](juce::AudioParameterChoice*) { write<std::string>(id, *xml); }
+      }, parameter);
     });
 
     LOG(xml->toString(juce::XmlElement::TextFormat().withoutHeader()));

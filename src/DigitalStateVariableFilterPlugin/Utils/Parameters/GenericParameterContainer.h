@@ -10,6 +10,12 @@ class GenericParameterContainer
 
 public:
 
+  using AnyRangedAudioParameter = std::variant<
+    juce::AudioParameterBool*,
+    juce::AudioParameterInt*,
+    juce::AudioParameterFloat*,
+    juce::AudioParameterChoice*>;
+
   GenericParameterContainer(juce::AudioProcessor& process) :
     process(process)
   {
@@ -17,7 +23,10 @@ public:
 
   juce::RangedAudioParameter* get(const std::string& id) const
   {
-    return parameters.at(id);
+    return std::visit(
+      [](juce::RangedAudioParameter* parameter)
+      { return parameter; },
+      parameters.at(id));
   }
 
   template<typename T>
@@ -39,26 +48,29 @@ public:
 
 protected:
 
-  void add(const std::string& ns, juce::RangedAudioParameter* parameter)
+  void add(const std::string& ns, AnyRangedAudioParameter parameter)
   {
-    auto id = parameter->getParameterID().toStdString();
-
-    auto callback = [ns, this]()
+    std::visit([ns, parameter, this](auto* pm)
     {
-      if (callbacks.contains(ns))
+      auto id = pm->getParameterID().toStdString();
+
+      auto callback = [ns, this]()
       {
-        for (const auto& callback : callbacks.at(ns))
+        if (callbacks.contains(ns))
         {
-          callback();
+          for (const auto& callback : callbacks.at(ns))
+          {
+            callback();
+          }
         }
-      }
-    };
+      };
 
-    auto subscription = std::make_unique<GenericParameterSubscription>(parameter, callback);
+      auto subscription = std::make_unique<GenericParameterSubscription>(pm, callback);
 
-    parameters[id] = parameter;
-    subscriptions.push_back(std::move(subscription));
-    process.addParameter(parameter);
+      parameters[id] = parameter;
+      subscriptions.push_back(std::move(subscription));
+      process.addParameter(pm);
+    }, parameter);
   }
 
   void call(const std::string& ns, std::function<void()> callback)
@@ -66,7 +78,7 @@ protected:
     callbacks[ns].push_back(std::move(callback));
   }
 
-  void visit(std::function<void(const std::string& id, const juce::RangedAudioParameter* parameter)> callback)
+  void visit(std::function<void(const std::string& id, const AnyRangedAudioParameter& parameter)> callback)
   {
     for (const auto& [id, parameter] : parameters)
     {
@@ -81,7 +93,7 @@ private:
 
   juce::AudioProcessor& process;
 
-  std::map<std::string, juce::RangedAudioParameter*> parameters;
+  std::map<std::string, AnyRangedAudioParameter> parameters;
   std::vector<std::unique_ptr<GenericParameterSubscription>> subscriptions;
   std::map<std::string, std::vector<std::function<void()>>> callbacks;
 
@@ -90,7 +102,7 @@ private:
 template<>
 inline bool GenericParameterContainer::get<bool>(const std::string& id) const
 {
-  auto* parameter = dynamic_cast<juce::AudioParameterBool*>(parameters.at(id));
+  auto* parameter = std::get<juce::AudioParameterBool*>(parameters.at(id));
 
   return *parameter;
 }
@@ -98,7 +110,7 @@ inline bool GenericParameterContainer::get<bool>(const std::string& id) const
 template<>
 inline int GenericParameterContainer::get<int>(const std::string& id) const
 {
-  auto* parameter = dynamic_cast<juce::AudioParameterInt*>(parameters.at(id));
+  auto* parameter = std::get<juce::AudioParameterInt*>(parameters.at(id));
 
   return *parameter;
 }
@@ -106,7 +118,7 @@ inline int GenericParameterContainer::get<int>(const std::string& id) const
 template<>
 inline float GenericParameterContainer::get<float>(const std::string& id) const
 {
-  auto* parameter = dynamic_cast<juce::AudioParameterFloat*>(parameters.at(id));
+  auto* parameter = std::get<juce::AudioParameterFloat*>(parameters.at(id));
 
   return *parameter;
 }
@@ -114,7 +126,7 @@ inline float GenericParameterContainer::get<float>(const std::string& id) const
 template<>
 inline double GenericParameterContainer::get<double>(const std::string& id) const
 {
-  auto* parameter = dynamic_cast<juce::AudioParameterFloat*>(parameters.at(id));
+  auto* parameter = std::get<juce::AudioParameterFloat*>(parameters.at(id));
 
   return static_cast<double>(*parameter);
 }
@@ -122,7 +134,7 @@ inline double GenericParameterContainer::get<double>(const std::string& id) cons
 template<>
 inline std::string GenericParameterContainer::get<std::string>(const std::string& id) const
 {
-  auto* parameter = dynamic_cast<juce::AudioParameterChoice*>(parameters.at(id));
+  auto* parameter = std::get<juce::AudioParameterChoice*>(parameters.at(id));
 
   return parameter->getCurrentChoiceName().toStdString();
 }
@@ -130,7 +142,7 @@ inline std::string GenericParameterContainer::get<std::string>(const std::string
 template<>
 inline void GenericParameterContainer::set<bool>(const std::string& id, const bool value) const
 {
-  auto* parameter = dynamic_cast<juce::AudioParameterBool*>(parameters.at(id));
+  auto* parameter = std::get<juce::AudioParameterBool*>(parameters.at(id));
 
   *parameter = value;
 }
@@ -138,7 +150,7 @@ inline void GenericParameterContainer::set<bool>(const std::string& id, const bo
 template<>
 inline void GenericParameterContainer::set<int>(const std::string& id, const int value) const
 {
-  auto* parameter = dynamic_cast<juce::AudioParameterInt*>(parameters.at(id));
+  auto* parameter = std::get<juce::AudioParameterInt*>(parameters.at(id));
 
   *parameter = value;
 }
@@ -146,7 +158,7 @@ inline void GenericParameterContainer::set<int>(const std::string& id, const int
 template<>
 inline void GenericParameterContainer::set<float>(const std::string& id, const float value) const
 {
-  auto* parameter = dynamic_cast<juce::AudioParameterFloat*>(parameters.at(id));
+  auto* parameter = std::get<juce::AudioParameterFloat*>(parameters.at(id));
 
   *parameter = value;
 }
@@ -154,7 +166,7 @@ inline void GenericParameterContainer::set<float>(const std::string& id, const f
 template<>
 inline void GenericParameterContainer::set<double>(const std::string& id, const double value) const
 {
-  auto* parameter = dynamic_cast<juce::AudioParameterFloat*>(parameters.at(id));
+  auto* parameter = std::get<juce::AudioParameterFloat*>(parameters.at(id));
 
   *parameter = static_cast<float>(value);
 }
@@ -162,7 +174,7 @@ inline void GenericParameterContainer::set<double>(const std::string& id, const 
 template<>
 inline void GenericParameterContainer::set<std::string>(const std::string& id, const std::string value) const
 {
-  auto* parameter = dynamic_cast<juce::AudioParameterChoice*>(parameters.at(id));
+  auto* parameter = std::get<juce::AudioParameterChoice*>(parameters.at(id));
 
   const juce::StringArray& choices = parameter->choices;
   const int index = choices.indexOf(std::move(value), true);
