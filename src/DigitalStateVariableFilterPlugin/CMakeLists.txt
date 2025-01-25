@@ -1,3 +1,7 @@
+project(DigitalStateVariableFilterPlugin
+        DESCRIPTION "Tunable digital filters (HP, LP, BP, BR)"
+        VERSION 1.0)
+
 set(FORMATS Standalone VST3)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
@@ -8,11 +12,11 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   list(APPEND FORMATS LV2)
 endif()
 
-juce_add_plugin(${CMAKE_PROJECT_NAME}
-  PLUGIN_NAME                   "${CMAKE_PROJECT_NAME} v${CMAKE_PROJECT_VERSION}"
-  DESCRIPTION                   "${CMAKE_PROJECT_DESCRIPTION}"
-  PRODUCT_NAME                  "${CMAKE_PROJECT_NAME}"
-  VERSION                       "${CMAKE_PROJECT_VERSION}"
+juce_add_plugin(${PROJECT_NAME}
+  PLUGIN_NAME                   "${PROJECT_NAME} v${PROJECT_VERSION}"
+  DESCRIPTION                   "${PROJECT_DESCRIPTION}"
+  PRODUCT_NAME                  "${PROJECT_NAME}"
+  VERSION                       "${PROJECT_VERSION}"
   COMPANY_NAME                  "jurihock"
   COMPANY_EMAIL                 "juergen.hock@jurihock.de"
   COMPANY_WEBSITE               "https://github.com/jurihock/dsvf"
@@ -27,9 +31,9 @@ juce_add_plugin(${CMAKE_PROJECT_NAME}
   COPY_PLUGIN_AFTER_BUILD       FALSE
   FORMATS                       ${FORMATS})
 
-juce_generate_juce_header(${CMAKE_PROJECT_NAME})
+juce_generate_juce_header(${PROJECT_NAME})
 
-target_include_directories(${CMAKE_PROJECT_NAME}
+target_include_directories(${PROJECT_NAME}
   PRIVATE
     "${CMAKE_CURRENT_LIST_DIR}/..")
 
@@ -38,23 +42,23 @@ file(
     HDR "${CMAKE_CURRENT_LIST_DIR}/*.h"
     CPP "${CMAKE_CURRENT_LIST_DIR}/*.cpp")
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(${PROJECT_NAME}
   PRIVATE
     "${HDR}"
     "${CPP}")
 
-target_link_libraries(${CMAKE_PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME}
   PRIVATE
     dsvf)
 
-target_link_libraries(${CMAKE_PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME}
   PRIVATE
     juce::juce_audio_utils
   PUBLIC
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags)
 
-target_compile_definitions(${CMAKE_PROJECT_NAME}
+target_compile_definitions(${PROJECT_NAME}
   PUBLIC
     DONT_SET_USING_JUCE_NAMESPACE=1
     JUCE_USE_CURL=0
@@ -66,11 +70,11 @@ if(FASTMATH)
   message(STATUS "Enabling fast math")
 
   if(MSVC)
-    target_compile_options(${CMAKE_PROJECT_NAME}
+    target_compile_options(${PROJECT_NAME}
       PRIVATE
         /fp:fast)
   else()
-    target_compile_options(${CMAKE_PROJECT_NAME}
+    target_compile_options(${PROJECT_NAME}
       PRIVATE
         -ffast-math)
   endif()
@@ -81,7 +85,7 @@ if(LOGGING)
 
   message(STATUS "Defining ENABLE_PLUGIN_LOGGER")
 
-  target_compile_definitions(${CMAKE_PROJECT_NAME}
+  target_compile_definitions(${PROJECT_NAME}
     PRIVATE
       -DENABLE_PLUGIN_LOGGER)
 
@@ -91,7 +95,7 @@ if(CHRONO)
 
   message(STATUS "Defining ENABLE_PLUGIN_CHRONOMETER")
 
-  target_compile_definitions(${CMAKE_PROJECT_NAME}
+  target_compile_definitions(${PROJECT_NAME}
     PRIVATE
       -DENABLE_PLUGIN_CHRONOMETER)
 
@@ -102,11 +106,11 @@ if(WARNINGS)
   message(STATUS "Enabling all warnings")
 
   if(MSVC)
-    target_compile_options(${CMAKE_PROJECT_NAME}
+    target_compile_options(${PROJECT_NAME}
       PRIVATE
         /W3 /WX)
   else()
-    target_compile_options(${CMAKE_PROJECT_NAME}
+    target_compile_options(${PROJECT_NAME}
       PRIVATE
         -Wall -Werror)
   endif()
@@ -124,11 +128,11 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 
   message(STATUS "Applying -Wl -ld_classic JUCE_SILENCE_XCODE_15_LINKER_WARNING")
 
-  target_link_options(${CMAKE_PROJECT_NAME}
+  target_link_options(${PROJECT_NAME}
     PRIVATE
       -Wl,-ld_classic)
 
-  target_compile_definitions(${CMAKE_PROJECT_NAME}
+  target_compile_definitions(${PROJECT_NAME}
     PRIVATE
       JUCE_SILENCE_XCODE_15_LINKER_WARNING)
 

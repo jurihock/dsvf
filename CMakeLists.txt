@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.1...3.18)
 
-project(DigitalStateVariableFilterPlugin
-        DESCRIPTION "Tunable digital filters (HP, LP, BP, BR)"
-        VERSION 1.0)
+project(DigitalStateVariableFilter)
 
 option(FASTMATH "Enable fast math"    OFF)
 option(LOGGING  "Enable runtime logs" OFF)
@@ -15,6 +13,6 @@ include("${CMAKE_CURRENT_LIST_DIR}/lib/numcpp.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/lib/doctest.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/lib/pluginval.cmake")
 
-include("${CMAKE_CURRENT_LIST_DIR}/src/DigitalStateVariableFilter/DSVF.cmake")
-# include("${CMAKE_CURRENT_LIST_DIR}/src/DigitalStateVariableFilterPlugin/Plugin.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/src/DigitalStateVariableFilterTest/Test.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/src/DigitalStateVariableFilter/CMakeLists.txt")
+include("${CMAKE_CURRENT_LIST_DIR}/src/DigitalStateVariableFilterPlugin/CMakeLists.txt")
+include("${CMAKE_CURRENT_LIST_DIR}/src/DigitalStateVariableFilterTest/CMakeLists.txt")
