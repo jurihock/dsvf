@@ -253,22 +253,22 @@ std::vector<double> Parameters::weights(const int channel) const
   {
     return
     {
-      get<double>("dry")    * get<double>("dry.left"),
-      get<double>("wet.hp") * get<double>("wet.hp.left"),
-      get<double>("wet.bp") * get<double>("wet.bp.left"),
-      get<double>("wet.lp") * get<double>("wet.lp.left"),
-      get<double>("wet.br") * get<double>("wet.br.left")
+      get<double>("dry")    * get<int>("dry.left"),
+      get<double>("wet.hp") * get<int>("wet.hp.left"),
+      get<double>("wet.bp") * get<int>("wet.bp.left"),
+      get<double>("wet.lp") * get<int>("wet.lp.left"),
+      get<double>("wet.br") * get<int>("wet.br.left")
     };
   }
   else
   {
     return
     {
-      get<double>("dry")    * get<double>("dry.right"),
-      get<double>("wet.hp") * get<double>("wet.hp.right"),
-      get<double>("wet.bp") * get<double>("wet.bp.right"),
-      get<double>("wet.lp") * get<double>("wet.lp.right"),
-      get<double>("wet.br") * get<double>("wet.br.right")
+      get<double>("dry")    * get<int>("dry.right"),
+      get<double>("wet.hp") * get<int>("wet.hp.right"),
+      get<double>("wet.bp") * get<int>("wet.bp.right"),
+      get<double>("wet.lp") * get<int>("wet.lp.right"),
+      get<double>("wet.br") * get<int>("wet.br.right")
     };
   }
 }
