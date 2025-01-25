@@ -43,17 +43,18 @@ TEST_CASE("test mix negative")
 
     nc::NdArray<double> x = test::wave<double>(sr, hz) / abs;
     nc::NdArray<double> y = nc::zeros_like<double>(x);
+    nc::NdArray<double> z = nc::zeros_like<double>(x);
 
     Mixer mixer;
     mixer.normalize(norm);
-    mixer.weights(0, -1, 2, -3, 4);
+    mixer.weights(0, 1, -2, -3, 4);
 
     for (size_t i = 0; i < x.size(); ++i)
     {
       y[i] = mixer.mix(x[i], x[i], x[i], x[i], x[i]); // sum(x * w)
     }
 
-    CHECK(nc::allclose(x, y) == norm);
+    CHECK(nc::allclose(y, z));
 
     if (false)
     {

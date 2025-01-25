@@ -89,7 +89,13 @@ public:
       static_cast<Weights::Scalar>(values)...
     };
 
-    config.normfactor = dot(config.weights);
+    Weights::Vector normweights =
+    {
+      static_cast<Weights::Scalar>(std::abs(value)),
+      static_cast<Weights::Scalar>(std::abs(values))...
+    };
+
+    config.normfactor = dot(normweights);
 
     if (std::abs(config.normfactor) > Weights::Eps)
     {
