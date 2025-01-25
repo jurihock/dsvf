@@ -5,7 +5,7 @@
 ![build cpp](https://img.shields.io/github/actions/workflow/status/jurihock/dsvf/build.yml?branch=main&label=build)
 ![tag](https://img.shields.io/github/v/tag/jurihock/dsvf?color=gold)
 
-A [JUCE](https://github.com/juce-framework/JUCE) plug-in providing a collection of tunable digital filters (such as HP, LP, BP, and BR) according to [[1]](#1) and [[2]](#2).
+A [JUCE](https://github.com/juce-framework/JUCE) plug-in providing a tunable digital state variable filter bank according to [[1]](#1) and [[2]](#2).
 
 <img src="assets/screenshot.png" width="500">
 

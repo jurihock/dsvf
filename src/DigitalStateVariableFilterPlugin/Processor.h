@@ -51,6 +51,7 @@ private:
 
   std::mutex mutex;
   std::optional<Config> config;
+  std::optional<bool> bypass;
   std::vector<std::unique_ptr<Effect>> effects;
   std::unique_ptr<Parameters> parameters;
 

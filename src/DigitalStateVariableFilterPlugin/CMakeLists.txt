@@ -1,5 +1,5 @@
 project(DigitalStateVariableFilterPlugin
-        DESCRIPTION "Tunable digital filters (HP, LP, BP, BR)"
+        DESCRIPTION "Tunable digital state variable filter bank"
         VERSION 1.0)
 
 set(FORMATS Standalone VST3)

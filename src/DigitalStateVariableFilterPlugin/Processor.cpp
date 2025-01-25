@@ -11,6 +11,13 @@ Processor::Processor() :
 {
   parameters = std::make_unique<Parameters>(*this);
 
+  parameters->onbypass([&]()
+  {
+    std::lock_guard lock(mutex);
+
+    bypass = parameters->bypass();
+  });
+
   parameters->onfrequency([&]()
   {
     std::lock_guard lock(mutex);
@@ -65,9 +72,11 @@ Processor::Processor() :
   {
     std::lock_guard lock(mutex);
 
+    int channel = 0;
+
     for (auto& effect : effects)
     {
-      effect->weights(parameters->weights());
+      effect->weights(parameters->weights(channel++));
     }
   });
 }
@@ -151,16 +160,18 @@ void Processor::prepareToPlay(double samplerate, int blocksize)
     .blocksize = blocksize
   };
 
+  bypass = parameters->bypass();
+
   try
   {
-    for (auto i = 0; i < 2; ++i)
+    for (auto channel = 0; channel < 2; ++channel)
     {
       const auto frequency = parameters->frequency();
       const auto quality = parameters->quality();
       const auto normalize = parameters->normalize();
       const auto gain = parameters->gain();
       const auto volume = parameters->volume();
-      const auto weights = parameters->weights();
+      const auto weights = parameters->weights(channel);
 
       auto effect = std::make_unique<Effect>(samplerate);
 
@@ -173,7 +184,7 @@ void Processor::prepareToPlay(double samplerate, int blocksize)
 
       effects.push_back(std::move(effect));
 
-      if (i < 1)
+      if (channel < 1)
       {
         const auto latency = effects.at(0)->latency();
 
@@ -211,6 +222,7 @@ void Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer& 
 
   std::lock_guard lock(mutex);
 
+  const int effect_channels = static_cast<int>(effects.size());
   const int input_channels  = getTotalNumInputChannels();
   const int output_channels = getTotalNumOutputChannels();
   const int channel_samples = audio.getNumSamples();
@@ -235,42 +247,26 @@ void Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer& 
 
   const auto process_stereo_input = [&]()
   {
-    const int min_channels = std::min(
+    for (int j = 0; j < std::min(output_channels, effect_channels); ++j)
     {
-      input_channels,
-      output_channels,
-      static_cast<int>(effects.size())
-    });
+      int i = std::min(j, input_channels - 1);
 
-    const int max_channels = std::min(
-    {
-      output_channels,
-      static_cast<int>(effects.size())
-    });
-
-    for (int channel = 0; channel < min_channels; ++channel)
-    {
       auto input = std::span<const float>(
-        audio.getReadPointer(channel),
+        audio.getReadPointer(i),
         static_cast<size_t>(channel_samples));
 
       auto output = std::span<float>(
-        audio.getWritePointer(channel),
+        audio.getWritePointer(j),
         static_cast<size_t>(channel_samples));
 
-      if (parameters->bypass())
+      if (bypass.value_or(parameters->bypass()))
       {
-        effects.at(channel)->dry(input, output);
+        effects.at(j)->dry(input, output);
       }
       else
       {
-        effects.at(channel)->wet(input, output);
+        effects.at(j)->wet(input, output);
       }
-    }
-
-    for (int channel = min_channels; channel < max_channels; ++channel)
-    {
-      audio.copyFrom(channel, 0, audio, 0, 0, channel_samples);
     }
   };
 
@@ -281,9 +277,9 @@ void Processor::processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer& 
       LOG("Copy input to output (%s)", error.c_str());
     }
 
-    for (int channel = 1; channel < output_channels; ++channel)
+    for (int j = 1, i = 0; j < output_channels; ++j)
     {
-      audio.copyFrom(channel, 0, audio, 0, 0, channel_samples);
+      audio.copyFrom(j, 0, audio, i, 0, channel_samples);
     }
   };
 
