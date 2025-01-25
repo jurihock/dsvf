@@ -123,7 +123,7 @@ Parameters::Parameters(juce::AudioProcessor& process) :
 
   add("quality", new juce::AudioParameterFloat(
     { "quality", schema }, "Quality",
-    juce::NormalisableRange<float>(0.1f, 10.0f, norm2log, log2norm), 1.0f,
+    juce::NormalisableRange<float>(0.1f, 100.0f, norm2log, log2norm), 1.0f,
     juce::AudioParameterFloatAttributes()
       .withStringFromValueFunction(fmt2flt)
       .withLabel("Q")));
