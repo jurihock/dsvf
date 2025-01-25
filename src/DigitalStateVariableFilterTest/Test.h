@@ -13,7 +13,7 @@ namespace test
   nc::NdArray<T> wave(const double samplerate, const double frequency, const double duration = 1)
   {
     const double pi = std::numbers::pi;
-    const double n  = samplerate * duration;
+    const double n  = duration * samplerate;
 
     auto time = nc::arange<double>(n) / samplerate;
     auto wave = nc::sin(2 * pi * frequency * time);

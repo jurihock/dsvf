@@ -3,7 +3,7 @@
 
 TEST_CASE("test bpf latency")
 {
-  double sr = 10'000;
+  double sr = 48'000;
   double hz =  1'000;
 
   nc::NdArray<double> x = test::wave<double>(sr, hz);
@@ -35,7 +35,7 @@ TEST_CASE("test bpf latency")
 
 TEST_CASE("test brf notch")
 {
-  double sr = 10'000;
+  double sr = 48'000;
   double hz =  1'000;
 
   nc::NdArray<double> x = test::wave<double>(sr, hz);

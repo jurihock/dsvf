@@ -5,7 +5,7 @@ TEST_CASE("test mix normalization")
 {
   for (bool norm : { true, false })
   {
-    double sr = 10'000;
+    double sr = 48'000;
     double hz =  1'000;
 
     nc::NdArray<double> x = test::wave<double>(sr, hz);
