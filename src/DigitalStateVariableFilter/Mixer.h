@@ -1,7 +1,7 @@
 #pragma once
 
-#include <DigitalStateVariableFilterPlugin/Effect/Clip.h>
-#include <DigitalStateVariableFilterPlugin/Effect/Dot.h>
+#include <DigitalStateVariableFilter/Clip.h>
+#include <DigitalStateVariableFilter/Dot.h>
 
 #include <algorithm>
 #include <array>

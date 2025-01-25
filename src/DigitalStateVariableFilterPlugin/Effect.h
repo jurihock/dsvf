@@ -2,8 +2,8 @@
 
 #include <JuceHeader.h>
 
-#include <DigitalStateVariableFilterPlugin/Effect/Filter.h>
-#include <DigitalStateVariableFilterPlugin/Effect/Mixer.h>
+#include <DigitalStateVariableFilter/Filter.h>
+#include <DigitalStateVariableFilter/Mixer.h>
 
 #include <memory>
 #include <span>

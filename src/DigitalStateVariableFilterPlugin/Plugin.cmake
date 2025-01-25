@@ -40,11 +40,12 @@ file(
 
 target_sources(${CMAKE_PROJECT_NAME}
   PRIVATE
-    ${HDR}
-    ${CPP})
+    "${HDR}"
+    "${CPP}")
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
-  PRIVATE)
+  PRIVATE
+    dsvf)
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
   PRIVATE
@@ -59,10 +60,6 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
     JUCE_USE_CURL=0
     JUCE_VST3_CAN_REPLACE_VST2=0
     JUCE_WEB_BROWSER=0)
-
-target_compile_features(${CMAKE_PROJECT_NAME}
-  PRIVATE
-    cxx_std_20)
 
 if(FASTMATH)
 

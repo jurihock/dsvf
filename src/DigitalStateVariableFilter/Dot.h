@@ -14,7 +14,7 @@ namespace details
   template<typename T, size_t N, size_t... I>
   constexpr T dot(const std::array<T, N>& a, const T b, std::index_sequence<I...>)
   {
-    return ((a[I] * b[I]) + ...);
+    return ((a[I] * b) + ...);
   }
 
   template<typename T, size_t N, size_t... I>

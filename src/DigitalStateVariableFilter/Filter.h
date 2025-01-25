@@ -1,7 +1,7 @@
 #pragma once
 
-#include <DigitalStateVariableFilterPlugin/Effect/Clip.h>
-#include <DigitalStateVariableFilterPlugin/Effect/Dot.h>
+#include <DigitalStateVariableFilter/Clip.h>
+#include <DigitalStateVariableFilter/Dot.h>
 
 #include <algorithm>
 #include <array>
@@ -37,11 +37,11 @@ private:
 
 public:
 
-  Filter(const double samplerate) :
+  Filter(const double samplerate = 1, const double frequency = 1, const double quality = 1) :
     config({
       .samplerate = samplerate,
-      .frequency = samplerate / 4,
-      .quality = 1
+      .frequency = frequency,
+      .quality = quality
     })
   {
     reset();
@@ -56,6 +56,11 @@ public:
   double samplerate() const
   {
     return config.samplerate;
+  }
+
+  void samplerate(const double value)
+  {
+    config.samplerate = value;
   }
 
   double frequency() const
